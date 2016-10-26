@@ -29,12 +29,13 @@ messaging and video conferencing without worrying about being eavesdropped.
 
 ## License
 
-Viska is free software and is licensed under the GNU General Public License
-v3.0.
+The Android app Viska is free software and is licensed under the GNU General
+Public License v3.0. The license can be found in the
+[`LICENSE` file](https://github.com/seamlik/viska-android/blob/master/LICENSE).
 
 ## Contributing
 
-Please refer to the 
+Please refer to the
 [same section in the `README.md` in libviska-java](https://github.com/seamlik/libviska-java/blob/master/README.md#contributing).
 
 ### Building the app
