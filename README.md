@@ -1,5 +1,5 @@
-Viska: Modern XMPP Client on Android Focusing Security
-======================================================
+Viska: Modern XMPP Client on Android Focusing on Security
+=========================================================
 
 Viska is an XMPP client on Android with lots of modern features while focusing
 on security. Viska heavily relies on
