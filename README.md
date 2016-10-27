@@ -65,7 +65,7 @@ The Viska project was orignally a graduate project of 3 undergraduate students
 from National Taichung University of Education:
 
 * [Kai-Chung Yan (殷啟聰)](https://github.com/seamlik): Core engineering
-* [BrokenPen (龔學良)](https://github.com/BrokenPen): App engineering
+* [BrokenPen](https://github.com/BrokenPen): App engineering
 * Liou-Yun Cheng (劉耘丞): UI and art designer
 
 With Professor [Lin-Huang Chang (張林煌)](http://www.ntcu.edu.tw/lchang) as the
