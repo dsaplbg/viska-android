@@ -1,0 +1,62 @@
+<!--
+  Copyright (C) 2017 Kai-Chung Yan (殷啟聰)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or any later
+  version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="chat.viska.android">
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
+  <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+  <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
+  <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+
+  <application android:name=".Application"
+               android:allowBackup="true"
+               android:banner="@drawable/banner"
+               android:icon="@drawable/icon"
+               android:label="@string/title_app_name"
+               android:logo="@drawable/icon"
+               android:supportsRtl="true"
+               android:theme="@style/Main">
+    <activity android:name=".demo.MainActivity" android:label="@string/title_app_name">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+    <activity android:name=".LoginActivity"
+              android:label="@string/title_activity_login"
+              android:launchMode="singleInstance">
+    </activity>
+    <service android:name=".XmppService"
+             android:description="@string/desc_service_xmpp"
+             android:label="@string/title_service_xmpp"/>
+    <service android:name=".AuthenticatorService"
+             android:description="@string/desc_authenticator_service"
+             android:label="@string/title_authenticator_service"
+             android:exported="false">
+      <intent-filter>
+        <action android:name="android.accounts.AccountAuthenticator"/>
+      </intent-filter>
+      <meta-data android:name="android.accounts.AccountAuthenticator"
+                 android:resource="@xml/authenticator"/>
+    </service>
+    <receiver android:name=".BootCompletedBroadcastReceiver" android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>

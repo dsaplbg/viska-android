@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Kai-Chung Yan (殷啟聰)
+ * Copyright (C) 2017 Kai-Chung Yan (殷啟聰)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,28 +17,41 @@
 buildscript {
   repositories {
     jcenter()
+    google()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:2.2.2'
+    classpath 'com.android.tools.build:gradle:3.0.0-beta6'
   }
 }
 
-apply plugin: 'com.android.application'
+subprojects {
 
-allprojects {
   repositories {
+    mavenLocal()
     jcenter()
+    google()
   }
-}
 
-android {
-  compileSdkVersion 25
-  buildToolsVersion '25.0.0'
-  defaultConfig {
-    applicationId 'viska'
-    minSdkVersion 17
-    targetSdkVersion 25
-    versionCode 1
-    versionName file('VERSION').text
+  apply plugin: 'com.android.application'
+
+  android {
+    compileSdkVersion 26
+    buildToolsVersion '26.0.1'
+    compileOptions {
+      sourceCompatibility 8
+      targetCompatibility sourceCompatibility
+    }
+    defaultConfig {
+      versionName rootProject.file('VERSION').text
+      versionCode 0
+    }
+  }
+
+  configurations {
+    all {
+      resolutionStrategy {
+        preferProjectModules()
+      }
+    }
   }
 }

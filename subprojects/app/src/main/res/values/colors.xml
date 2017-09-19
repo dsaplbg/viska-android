@@ -1,0 +1,26 @@
+<!--
+  ~ Copyright (C) 2017 Kai-Chung Yan (殷啟聰)
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, version 3 of the License, or any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+  <color name="primaryColor">#283593</color>
+  <color name="primaryLightColor">#5f5fc4</color>
+  <color name="primaryDarkColor">#001064</color>
+  <color name="secondaryColor">#757575</color>
+  <color name="secondaryLightColor">#a4a4a4</color>
+  <color name="secondaryDarkColor">#494949</color>
+  <color name="primaryTextColor">#ffffff</color>
+  <color name="secondaryTextColor">#ffffff</color>
+</resources>

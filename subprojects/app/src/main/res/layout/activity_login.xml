@@ -1,0 +1,145 @@
+<!--
+  ~ Copyright (C) 2017 Kai-Chung Yan (殷啟聰)
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, version 3 of the License, or any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_login"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:theme="@style/Login">
+
+  <ImageView android:id="@+id/login_canvas"
+             android:layout_width="0dp"
+             android:layout_height="0dp"
+             android:contentDescription="@string/desc_canvas"
+             android:src="@color/primaryColor"
+             app:layout_constraintBottom_toTopOf="@id/login_TextInputLayout_jid"
+             app:layout_constraintTop_toTopOf="parent"
+             app:layout_constraintStart_toStartOf="parent"
+             app:layout_constraintEnd_toEndOf="parent"/>
+
+  <ImageView android:layout_width="0dp"
+             android:layout_height="0dp"
+             app:layout_constraintDimensionRatio="1:1"
+             android:contentDescription="@string/desc_logo"
+             android:src="@drawable/icon"
+             android:translationZ="1dp"
+             android:scaleType="fitCenter"
+             app:layout_constraintBottom_toBottomOf="@id/login_anchor_logo"
+             app:layout_constraintTop_toTopOf="@id/login_anchor_logo"
+             app:layout_constraintStart_toStartOf="@id/login_TextInputLayout_jid"/>
+
+  <TextView android:id="@+id/login_anchor_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:translationZ="1dp"
+            android:layout_marginBottom="@dimen/margin"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            app:layout_constraintBottom_toTopOf="@id/login_title"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"/>
+
+  <TextView android:id="@+id/login_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:text="@string/title_login"
+            android:layout_marginBottom="@dimen/margin"
+            app:layout_constraintStart_toStartOf="@id/login_TextInputLayout_jid"
+            app:layout_constraintBottom_toTopOf="@id/login_desc"
+            app:layout_constraintTop_toBottomOf="@id/login_anchor_logo"
+            android:translationZ="1dp"/>
+
+  <TextView android:id="@+id/login_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:translationZ="2dp"
+            android:layout_marginBottom="@dimen/margin"
+            android:text="@string/desc_login"
+            android:textAppearance="@style/TextAppearance.AppCompat.Inverse"
+            app:layout_constraintBottom_toTopOf="@id/login_TextInputLayout_jid"
+            app:layout_constraintTop_toBottomOf="@id/login_title"
+            app:layout_constraintStart_toStartOf="@id/login_TextInputLayout_jid"/>
+
+  <android.support.design.widget.TextInputLayout
+      android:id="@+id/login_TextInputLayout_jid"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="@dimen/margin"
+      android:layout_marginEnd="@dimen/margin"
+      android:paddingTop="@dimen/margin"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/login_desc"
+      app:layout_constraintBottom_toTopOf="@id/login_TextInputLayout_password"
+      app:layout_constraintVertical_chainStyle="packed"
+      app:errorEnabled="true">
+
+    <android.support.design.widget.TextInputEditText
+        android:id="@+id/login_EditText_jid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/title_jid"
+        android:inputType="textEmailAddress"
+        android:singleLine="true"/>
+  </android.support.design.widget.TextInputLayout>
+
+  <android.support.design.widget.TextInputLayout
+      android:id="@+id/login_TextInputLayout_password"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      app:layout_constraintBottom_toTopOf="@+id/login_button"
+      app:layout_constraintTop_toBottomOf="@id/login_TextInputLayout_jid"
+      app:layout_constraintEnd_toEndOf="@id/login_TextInputLayout_jid"
+      app:layout_constraintStart_toStartOf="@id/login_TextInputLayout_jid"
+      app:errorEnabled="true">
+
+    <android.support.design.widget.TextInputEditText
+        android:id="@+id/login_EditText_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/title_password"
+        android:inputType="textPassword"
+        android:singleLine="true"
+        android:imeOptions="actionGo"/>
+  </android.support.design.widget.TextInputLayout>
+
+  <ProgressBar android:id="@+id/login_progress"
+               android:layout_width="wrap_content"
+               android:layout_height="0dp"
+               android:indeterminate="true"
+               android:layout_marginEnd="@dimen/margin_half"
+               android:paddingBottom="@dimen/margin_half"
+               android:paddingTop="@dimen/margin_half"
+               android:visibility="gone"
+               app:layout_constraintEnd_toStartOf="@id/login_button"
+               app:layout_constraintTop_toTopOf="@id/login_button"
+               app:layout_constraintBottom_toBottomOf="@id/login_button"/>
+
+  <Button android:id="@+id/login_button"
+          style="@style/Widget.AppCompat.Button.Colored"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/title_login"
+          android:textStyle="bold"
+          android:onClick="onButtonClicked"
+          android:enabled="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="@id/login_TextInputLayout_jid"
+          app:layout_constraintTop_toBottomOf="@+id/login_TextInputLayout_password"/>
+</android.support.constraint.ConstraintLayout>
