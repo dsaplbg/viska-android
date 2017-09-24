@@ -2,7 +2,6 @@ package chat.viska.android;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
-import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -12,6 +11,7 @@ import android.os.IBinder;
 import android.support.design.widget.TextInputLayout;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -19,10 +19,8 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.xmpp.Jid;
-import chat.viska.xmpp.Session;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import javax.annotation.Nonnull;
 
 /**
  * Login with a new or an existing account.
@@ -30,7 +28,6 @@ import javax.annotation.Nonnull;
  * <h2>Accepted {@link android.content.Intent} Extra Data</h2>
  *
  * <ul>
- *   <li>{@link #KEY_IS_ADDING}</li>
  *   <li>{@link #KEY_IS_UPDATING}</li>
  * </ul>
  */
@@ -70,11 +67,6 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   }
 
   /**
-   * Key to a {@link Boolean} indicating the {@link android.content.Intent} is to add a new account.
-   */
-  public final static String KEY_IS_ADDING = "is-adding";
-
-  /**
    * Key to a {@link Boolean} indicating the {@link android.content.Intent} is to log in using an
    * existing account.
    */
@@ -100,6 +92,11 @@ public class LoginActivity extends AccountAuthenticatorActivity {
       isLoggingIn.setValue(false);
       return;
     }
+    if (AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type)).length > 0) {
+      onLoginFailed(new RuntimeException("1 account maximum."));
+    }
+
+    isLoggingIn.setValue(true);
     if (service == null) {
       bindService(new Intent(this, XmppService.class), binding, BIND_AUTO_CREATE);
     } else {
@@ -109,7 +106,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
   private void attemptLogin() {
     service
-        .login(jid, passwordEditText.getText().toString())
+        .login(jid, passwordEditText.getText().toString(), getIntent().getBooleanExtra(KEY_IS_UPDATING, false))
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(this::onLoginSucceeded, this::onLoginFailed);
@@ -117,9 +114,6 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
   private void onLoginSucceeded() {
     isLoggingIn.setValue(false);
-    final AccountAuthenticatorResponse authResponse = getIntent().getParcelableExtra(
-        AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE
-    );
     final Account account = new Account(
         jidEditText.getText().toString(),
         getString(R.string.api_account_type)
@@ -128,17 +122,17 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     final Bundle bundle = new Bundle();
     bundle.putString(AccountManager.KEY_ACCOUNT_TYPE, getString(R.string.api_account_type));
     bundle.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-    if (getIntent().getBooleanExtra(KEY_IS_ADDING, false)) {
-      manager.addAccountExplicitly(account, passwordEditText.getText().toString(), null);
-      setAccountAuthenticatorResult(bundle);
-    } else if (getIntent().getBooleanExtra(KEY_IS_UPDATING, false)) {
+    if (getIntent().getBooleanExtra(KEY_IS_UPDATING, false)) {
       manager.setPassword(account, passwordEditText.getText().toString());
+      setAccountAuthenticatorResult(bundle);
+    } else {
+      manager.addAccountExplicitly(account, passwordEditText.getText().toString(), null);
       setAccountAuthenticatorResult(bundle);
     }
     finish();
   }
 
-  private void onLoginFailed(@Nonnull final Throwable cause) {
+  private void onLoginFailed(final Throwable cause) {
     isLoggingIn.setValue(false);
     passwordTextLayout.setError(cause.getLocalizedMessage());
   }
@@ -169,6 +163,11 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_login);
 
+    if (getIntent().getBooleanExtra(KEY_IS_UPDATING, false)) {
+      jidEditText.setText(getIntent().getStringExtra(AccountManager.KEY_ACCOUNT_NAME));
+      jidEditText.setEnabled(false);
+    }
+
     this.jidEditText = findViewById(R.id.login_EditText_jid);
     this.jidTextLayout = findViewById(R.id.login_TextInputLayout_jid);
     this.passwordEditText = findViewById(R.id.login_EditText_password);
@@ -195,25 +194,24 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     this.jidEditText.addTextChangedListener(watcher);
     this.passwordEditText.addTextChangedListener(watcher);
 
-    this.passwordEditText.setOnEditorActionListener((textView, action, keyEvent) -> {
-      if (action == EditorInfo.IME_ACTION_GO) {
+    this.passwordEditText.setOnEditorActionListener((textView, action, event) -> {
+      if (!button.isEnabled()) {
+        return false;
+      } else if (action == EditorInfo.IME_ACTION_GO || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
         login();
         return true;
       } else {
         return false;
       }
     });
-
-    if (getIntent().getBooleanExtra(KEY_IS_UPDATING, false)) {
-      jidEditText.setText(getIntent().getStringExtra(AccountManager.KEY_ACCOUNT_NAME));
-      jidEditText.setEnabled(false);
-    }
   }
 
   @Override
   protected void onDestroy() {
     this.isLoggingIn.complete();
-    unbindService(binding);
+    if (this.service != null) {
+      unbindService(binding);
+    }
     super.onDestroy();
   }
 }

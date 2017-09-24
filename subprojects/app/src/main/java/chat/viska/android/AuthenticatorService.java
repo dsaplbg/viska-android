@@ -51,7 +51,6 @@ public class AuthenticatorService extends Service {
       final Bundle result = new Bundle(1);
       final Intent intent = new Intent(AuthenticatorService.this, LoginActivity.class);
       intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
-      intent.putExtra(LoginActivity.KEY_IS_ADDING, true);
       result.putParcelable(AccountManager.KEY_INTENT, intent);
       return result;
     }

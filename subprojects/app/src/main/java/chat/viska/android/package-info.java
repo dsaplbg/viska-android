@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package chat.viska.android.demo;
+package chat.viska.android;
 
 import javax.annotation.ParametersAreNonnullByDefault;

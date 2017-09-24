@@ -15,5 +15,5 @@
   -->
 
 <resources>
-  <item name="notif_foreground" type="id"/>
+  <item name="notif_running" type="id"/>
 </resources>

@@ -25,12 +25,12 @@
   <string name="desc_canvas">A canvas.</string>
   <string name="desc_no_auth_token">This app does not yet support auth tokens for XMPP.</string>
   <string name="desc_unsupported_account_type">Does not support this account type.</string>
-  <string name="desc_permission_error_accounts">
-    Permission to access system accounts is not granted, Viska failed to launch.
-  </string>
   <string name="desc_invalid_jid">Invalid XMPP address.</string>
   <string name="desc_login_canceled_by_system">
     The login process was canceled by the system.
+  </string>
+  <string name="desc_use_account_adding_command_instead">
+    Please use the system settings app to add an account.
   </string>
   <string name="desc_server_has_no_secure_connection">
     The server does not support any secure connections.
@@ -38,6 +38,13 @@
   <string name="desc_server_uses_unsupported_protocol">
     The server only supports XMPP protocols that we do not.
   </string>
+  <string name="desc_permission_error_accounts">
+    Permission to access system accounts is not granted, %1s failed to launch.
+  </string>
+  <string name="desc_permission_error_network">
+    Permission to access network is not granted, %1s failed to launch.
+  </string>
+  <string name="desc_duplicated_account">You already logged in this account.</string>
 
   <string name="title_login">Log in</string>
   <string name="desc_login">Connect to your favorite XMPP servers.</string>

@@ -44,6 +44,8 @@ subprojects {
     defaultConfig {
       versionName rootProject.file('VERSION').text
       versionCode 0
+      minSdkVersion 21
+      targetSdkVersion 26
     }
   }
 
