@@ -21,7 +21,7 @@ dependencies {
   implementation 'com.android.support:design:26.1.0'
   implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
   implementation 'javax.xml.stream:stax-api:1.0'
-  implementation files("${rootDir}/external/prebuilts-webrtc-android/jingle-peerconnection-android.jar")
+  implementation 'org.webrtc:google-webrtc:1.0.20011'
 }
 
 android {
@@ -35,7 +35,7 @@ android {
   splits {
     abi {
       enable = true
-      exclude 'armeabi', 'mips64'
+      exclude 'armeabi', 'mips', 'mips64'
     }
   }
 }
