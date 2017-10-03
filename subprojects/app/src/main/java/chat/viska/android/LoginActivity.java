@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.xmpp.Jid;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
@@ -92,8 +93,11 @@ public class LoginActivity extends AccountAuthenticatorActivity {
       isLoggingIn.setValue(false);
       return;
     }
-    if (AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type)).length > 0) {
-      onLoginFailed(new RuntimeException("1 account maximum."));
+    final boolean duplicated = Observable.fromArray(
+        AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type))
+    ).any(it -> jid.toString().equals(it.name)).blockingGet();
+    if (duplicated) {
+      onLoginFailed(new DuplicatedAccountsException(getString(R.string.desc_duplicated_accounts)));
     }
 
     isLoggingIn.setValue(true);
@@ -134,14 +138,19 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
   private void onLoginFailed(final Throwable cause) {
     isLoggingIn.setValue(false);
-    passwordTextLayout.setError(cause.getLocalizedMessage());
+    if (cause instanceof DuplicatedAccountsException) {
+      this.passwordTextLayout.setError(getString(R.string.desc_duplicated_accounts));
+    } else {
+      passwordTextLayout.setError(cause.getLocalizedMessage());
+    }
   }
 
   private void cancel() {
     button.setEnabled(false);
     service
         .getSessions()
-        .get(jid).dispose()
+        .get(jid)
+        .disconnect()
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(() -> {

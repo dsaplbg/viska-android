@@ -15,7 +15,7 @@
   -->
 
 <resources>
-  <string name="title_app_name">Viska</string>
+  <string name="title_app">Viska</string>
   <string name="title_jid">XMPP address</string>
   <string name="title_password">Password</string>
   <string name="title_cancel">Cancel</string>
@@ -44,7 +44,7 @@
   <string name="desc_permission_error_network">
     Permission to access network is not granted, %1s failed to launch.
   </string>
-  <string name="desc_duplicated_account">You already logged in this account.</string>
+  <string name="desc_duplicated_accounts">You already logged in this account.</string>
 
   <string name="title_login">Log in</string>
   <string name="desc_login">Connect to your favorite XMPP servers.</string>

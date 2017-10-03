@@ -26,20 +26,17 @@
                android:allowBackup="true"
                android:banner="@drawable/banner"
                android:icon="@drawable/icon"
-               android:label="@string/title_app_name"
+               android:label="@string/title_app"
                android:logo="@drawable/icon"
                android:supportsRtl="true"
                android:theme="@style/Main">
-    <activity android:name=".demo.MainActivity" android:label="@string/title_app_name">
+    <activity android:name=".demo.MainActivity" android:label="@string/title_app">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
-    <activity android:name=".LoginActivity"
-              android:label="@string/title_activity_login"
-              android:launchMode="singleInstance">
-    </activity>
+    <activity android:name=".LoginActivity" android:label="@string/title_activity_login"/>
     <service android:name=".XmppService"
              android:description="@string/desc_service_xmpp"
              android:label="@string/title_service_xmpp"/>
@@ -49,6 +46,9 @@
              android:exported="false">
       <intent-filter>
         <action android:name="android.accounts.AccountAuthenticator"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.SYNC"/>
       </intent-filter>
       <meta-data android:name="android.accounts.AccountAuthenticator"
                  android:resource="@xml/authenticator"/>

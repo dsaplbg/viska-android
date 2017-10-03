@@ -14,7 +14,10 @@
   ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<resources>
-  <string name="api_account_type">chat.viska.xmpp</string>
-  <string name="api_account_enabled">enabled</string>
-</resources>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+          android:layout_marginTop="@dimen/margin"
+          android:layout_marginBottom="@dimen/margin">
+</TextView>

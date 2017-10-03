@@ -30,7 +30,7 @@ public class LogcatHandler extends Handler implements SessionAware {
   private final Session session;
   private boolean closed = false;
 
-  public static int toAndroidLevel(final Level level) {
+  public static int toAndroidLevel(@Nonnull final Level level) {
     Objects.requireNonNull(level);
     if (level.intValue() >= Level.SEVERE.intValue()) {
       return Log.ERROR;
@@ -45,8 +45,7 @@ public class LogcatHandler extends Handler implements SessionAware {
     }
   }
 
-  public LogcatHandler(final Session session) {
-    Objects.requireNonNull(session);
+  public LogcatHandler(@Nonnull final Session session) {
     this.session = session;
   }
 
@@ -59,7 +58,7 @@ public class LogcatHandler extends Handler implements SessionAware {
   public void flush() {}
 
   @Override
-  public void publish(LogRecord record) {
+  public void publish(@Nonnull final LogRecord record) {
     if (closed || !isLoggable(record)) {
       return;
     }

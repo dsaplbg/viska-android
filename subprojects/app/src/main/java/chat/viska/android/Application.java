@@ -23,12 +23,16 @@ import android.os.Build;
 
 public class Application extends android.app.Application {
 
+  public static final String KEY_NOTIF_CHANNEL_MESSAGES = "messages";
+  public static final String KEY_NOTIF_CHANNEL_SYSTEM = "system";
+  public static final String KEY_PREF_FIRST_RUN = "first-run";
+
   private void initializeNotificationChannels() {
     if (Build.VERSION.SDK_INT >= 26) {
       final NotificationManager manager = getSystemService(NotificationManager.class);
 
       final NotificationChannel systemChannel = new NotificationChannel(
-          getString(R.string.api_notif_channel_system),
+          KEY_NOTIF_CHANNEL_SYSTEM,
           getString(R.string.title_notif_channel_system),
           NotificationManager.IMPORTANCE_LOW
       );
@@ -40,7 +44,7 @@ public class Application extends android.app.Application {
       manager.createNotificationChannel(systemChannel);
 
       final NotificationChannel messagingChannel = new NotificationChannel(
-          getString(R.string.api_notif_channel_messaging),
+          KEY_NOTIF_CHANNEL_MESSAGES,
           getString(R.string.title_notif_channel_messaging),
           NotificationManager.IMPORTANCE_HIGH
       );

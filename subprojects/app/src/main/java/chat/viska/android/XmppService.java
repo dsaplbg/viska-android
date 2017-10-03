@@ -16,6 +16,7 @@
 
 package chat.viska.android;
 
+import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OnAccountsUpdateListener;
 import android.app.Notification;
@@ -24,16 +25,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Build;
 import android.os.IBinder;
 import android.widget.Toast;
+import chat.viska.commons.reactive.MutableReactiveObject;
+import chat.viska.commons.reactive.ReactiveObject;
 import chat.viska.xmpp.Connection;
 import chat.viska.xmpp.Jid;
 import chat.viska.xmpp.Session;
+import chat.viska.xmpp.StandardSession;
+import chat.viska.xmpp.plugins.BasePlugin;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -41,17 +45,15 @@ import io.reactivex.schedulers.Schedulers;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
-import org.xbill.DNS.ExtendedResolver;
-import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Resolver;
-import org.xbill.DNS.SimpleResolver;
 
 public class XmppService extends Service {
 
@@ -64,19 +66,13 @@ public class XmppService extends Service {
   }
 
   @GuardedBy("itself")
-  private final HashMap<Jid, Session> sessions = new HashMap<>();
+  private final HashMap<Jid, StandardSession> sessions = new HashMap<>();
   private final IBinder binder = new Binder();
   private final OnAccountsUpdateListener accountsListener = accounts -> syncAllAccounts();
+  private final MutableReactiveObject<Boolean> syncingAccounts = new MutableReactiveObject<>(false);
   private AccountManager accountManager;
 
   private final ConnectivityManager.NetworkCallback networkListener = new ConnectivityManager.NetworkCallback() {
-
-    @Override
-    public void onLinkPropertiesChanged(final Network network, final LinkProperties linkProperties) {
-      super.onLinkPropertiesChanged(network, linkProperties);
-      initializeNetwork();
-    }
-
     @Override
     public void onAvailable(Network network) {
       super.onAvailable(network);
@@ -84,17 +80,9 @@ public class XmppService extends Service {
     }
   };
 
-  private boolean isNeeded() {
-    return Observable.fromArray(accountManager.getAccountsByType(getString(R.string.api_account_type))).any(
-        account -> "true".equals(
-            accountManager.getUserData(account, getString(R.string.api_account_enabled))
-        )
-    ).blockingGet();
-  }
-
   private void startForeground() {
     final Notification.Builder builder = Build.VERSION.SDK_INT >= 26
-        ? new Notification.Builder(this, getString(R.string.api_notif_channel_system))
+        ? new Notification.Builder(this, Application.KEY_NOTIF_CHANNEL_SYSTEM)
         : new Notification.Builder(this);
     builder
         .setContentTitle(getString(R.string.title_app_running))
@@ -106,16 +94,17 @@ public class XmppService extends Service {
   }
 
   /**
-   * Constructs and logs in a {@link Session}.
-   * @throws UnsupportedOperationException If no {@link Session} implementations supports the
-   * {@link chat.viska.xmpp.Connection.Protocol} specified by {@code connection}.
+   * Constructs and logs in a {@link StandardSession}.
+   * @throws UnsupportedOperationException If no {@link StandardSession} implementations supports
+   * the {@link chat.viska.xmpp.Connection.Protocol} specified by {@code connection}.
    */
   @Nonnull
-  private Session constructSession(final Jid jid, final Connection connection)
-      throws UnsupportedOperationException {
-    final Session session;
+  private StandardSession constructSession(@Nonnull final Jid jid,
+                                           @Nonnull final Connection connection,
+                                           final boolean replaceExisting) {
+    final StandardSession session;
     try {
-      session = Session.getInstance(Collections.singleton(connection.getProtocol()));
+      session = StandardSession.getInstance(Collections.singleton(connection.getProtocol()));
     } catch (Exception ex) {
       throw new UnsupportedOperationException(
           getString(R.string.desc_server_uses_unsupported_protocol)
@@ -124,6 +113,18 @@ public class XmppService extends Service {
 
     session.setConnection(connection);
     session.setLoginJid(jid);
+    session.getPluginManager().apply(BasePlugin.class);
+    synchronized (this.sessions) {
+      if (this.sessions.containsKey(jid)) {
+        if (replaceExisting) {
+          this.sessions.get(jid).dispose().subscribeOn(Schedulers.io()).subscribe();
+        } else {
+          throw new DuplicatedAccountsException();
+        }
+      } else {
+        this.sessions.put(jid, session);
+      }
+    }
 
     if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) == 0) {
       session.getLogger().setLevel(Level.WARNING);
@@ -140,11 +141,11 @@ public class XmppService extends Service {
         .filter(it -> it == Session.State.DISPOSED)
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(it -> {
-          synchronized (sessions) {
-            if (sessions.containsValue(session)) {
-              sessions.remove(jid);
+          synchronized (this.sessions) {
+            if (this.sessions.containsValue(session)) {
+              this.sessions.remove(jid);
             }
-            if (sessions.size() == 0) {
+            if (this.sessions.size() == 0) {
               stopForeground(true);
             }
           }
@@ -152,22 +153,21 @@ public class XmppService extends Service {
     session
         .getState()
         .getStream()
-        .filter(it -> it == Session.State.ONLINE)
+        .filter(it -> it == Session.State.DISCONNECTED)
         .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(it -> {
-          synchronized (sessions) {
-            sessions.put(jid, session);
-            startForeground();
-          }
-        });
+        .subscribe(it -> startForeground());
     return session;
   }
 
-  private void initializeNetwork() {
+  @Nonnull
+  private List<InetAddress> getDns() {
     final ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(
         CONNECTIVITY_SERVICE
     );
-    final List<InetAddress> dns = Observable.fromArray(
+    if (connectivityManager == null) {
+      return Collections.emptyList();
+    }
+    return Observable.fromArray(
         connectivityManager.getAllNetworks()
     ).filter(it ->
         connectivityManager.getNetworkCapabilities(it).hasCapability(
@@ -176,65 +176,107 @@ public class XmppService extends Service {
     ).map(connectivityManager::getLinkProperties).flatMap(
         it -> Observable.fromIterable(it.getDnsServers())
     ).toList().blockingGet();
-    final List<String> dnsNames = Observable
-        .fromIterable(dns)
-        .map(InetAddress::toString)
-        .toList()
-        .blockingGet();
-    final List<? extends Resolver> resolvers = Observable.fromIterable(dns).map(it -> {
-      final SimpleResolver resolver = new SimpleResolver("localhost");
-      resolver.setAddress(it);
-      return resolver;
-    }).toList().blockingGet();
-    final ExtendedResolver resolver;
-    try {
-      Lookup.setDefaultResolver(new ExtendedResolver(resolvers.toArray(new Resolver[resolvers.size()])));
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
   }
 
   private void syncAllAccounts() {
+    Completable.fromAction(() -> {
+      if (this.syncingAccounts.getValue()) {
+        return;
+      }
+      this.syncingAccounts.setValue(true);
+      final List<Jid> enabled = Observable.fromArray(
+          this.accountManager.getAccountsByType(getString(R.string.api_account_type))
+      ).map(it -> new Jid(it.name)).toList().blockingGet();
+
+      final Set<Jid> toRemove;
+      final Set<Jid> toLogin;
+      final Set<Jid> toRemain;
+      synchronized (this.sessions) {
+        toRemove = new HashSet<>(this.sessions.keySet());
+        toRemove.removeAll(enabled);
+        toLogin = new HashSet<>(enabled);
+        toLogin.removeAll(this.sessions.keySet());
+        toRemain = new HashSet<>(this.sessions.keySet());
+        toRemain.removeAll(toRemove);
+
+        for (Jid it : toRemove) {
+          this.sessions.get(it).dispose().subscribe();
+        }
+        for (Jid it : toLogin) {
+          login(
+              it,
+              this.accountManager.getPassword(
+                  new Account(it.toString(), getString(R.string.api_account_type))
+              ),
+              false
+          ).subscribe();
+        }
+        for (Jid it : toRemain) {
+          final StandardSession session = this.sessions.get(it);
+          switch (session.getState().getValue()) {
+            case DISPOSED:
+              this.sessions.remove(it);
+              login(
+                  it,
+                  accountManager.getPassword(
+                      new Account(it.toString(), getString(R.string.api_account_type))
+                  ),
+                  false
+              ).subscribe();
+              break;
+            case DISCONNECTED:
+              session.login(
+                  accountManager.getPassword(
+                      new Account(it.toString(), getString(R.string.api_account_type))
+                  )
+              ).subscribe();
+              break;
+          }
+        }
+      }
+    }).doFinally(
+        () -> this.syncingAccounts.setValue(false)
+    ).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
+        () -> {},
+        cause -> Toast.makeText(this, cause.getLocalizedMessage(), Toast.LENGTH_LONG).show()
+    );
+
   }
 
   @Nonnull
-  public Map<Jid, Session> getSessions() {
+  public Map<Jid, StandardSession> getSessions() {
     return Collections.unmodifiableMap(sessions);
+  }
+
+  @Nonnull
+  public ReactiveObject<Boolean> isSyncingAccounts() {
+    return syncingAccounts;
   }
 
   /**
    * Submits an XMPP account and logs it in. If a {@link Session} with the same {@link Jid} already
    * exists, it is disposed of and removed first. Signals {@link UnsupportedOperationException} if
-   * no secure XMPP connection methods are found. May signal other {@link Exception}s.
-   * @throws IllegalArgumentException If {@code relaceExisting} is set to {@code false} and there is
-   *         another {@link Session} with the same {@link Jid} currently logged in.
+   * no secure XMPP connection methods are found. May signal other {@link Exception}s. Signals
+   * {@link DuplicatedAccountsException}.
    */
   @Nonnull
   @CheckReturnValue
-  public Completable login(final Jid jid, final String password, boolean replaceExisting) {
-    synchronized (sessions) {
-      final Session existingSession = sessions.get(jid);
-      if (existingSession != null) {
-        if (replaceExisting) {
-          existingSession.dispose().subscribeOn(Schedulers.io()).subscribe();
-          sessions.remove(jid);
-        } else {
-          throw new IllegalArgumentException(getString(R.string.desc_duplicated_account));
-        }
-      }
-    }
+  public Completable login(@Nonnull final Jid jid,
+                           @Nonnull final String password,
+                           final boolean replaceExisting) {
     startForeground();
     return Connection
-        .queryDns(jid.getDomainPart())
+        .queryDns(jid.getDomainPart(), getDns())
         .flatMapMaybe(it -> Observable.fromIterable(it).filter(Connection::isTlsEnabled).firstElement())
         .doOnComplete(() -> {
           throw new UnsupportedOperationException(
               getString(R.string.desc_server_has_no_secure_connection)
           );
         })
-        .map(connection -> constructSession(jid, connection))
-        .flatMapCompletable(session -> session.login(password))
-        .doOnError(ex -> stopForeground(true));
+        .map(connection -> constructSession(jid, connection, replaceExisting))
+        .flatMapCompletable(session -> session.login(password)
+        .doOnError(ex -> session.dispose().subscribeOn(Schedulers.io()).subscribe()))
+        .doOnComplete(this::startForeground);
   }
 
   @Override
@@ -250,14 +292,11 @@ public class XmppService extends Service {
     } catch (SecurityException ex) {
       Toast.makeText(
           this,
-          getString(R.string.desc_permission_error_accounts, getString(R.string.title_app_name)),
+          getString(R.string.desc_permission_error_accounts, getString(R.string.title_app)),
           Toast.LENGTH_LONG
       ).show();
       stopSelf();
       return;
-    }
-    if (isNeeded()) {
-      startForeground();
     }
     accountManager.addOnAccountsUpdatedListener(accountsListener, null, true);
 
@@ -270,16 +309,16 @@ public class XmppService extends Service {
         .build();
     try {
       connectivityManager.registerNetworkCallback(networkRequest, networkListener);
-    } catch (SecurityException ex) {
+    } catch (Exception ex) {
       Toast.makeText(
           this,
-          getString(R.string.desc_permission_error_network, getString(R.string.title_app_name)),
+          getString(R.string.desc_permission_error_network, getString(R.string.title_app)),
           Toast.LENGTH_LONG
       ).show();
       stopSelf();
-      return;
     }
 
+    syncAllAccounts();
   }
 
   @Override
@@ -287,6 +326,10 @@ public class XmppService extends Service {
     accountManager.removeOnAccountsUpdatedListener(accountsListener);
     ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE)).unregisterNetworkCallback(
         networkListener
+    );
+    syncingAccounts.complete();
+    Observable.fromIterable(this.sessions.values()).observeOn(Schedulers.io()).subscribe(
+        StandardSession::close
     );
     super.onDestroy();
   }
