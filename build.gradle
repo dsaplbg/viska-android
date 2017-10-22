@@ -20,12 +20,11 @@ buildscript {
     google()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.0.0-beta6'
+    classpath 'com.android.tools.build:gradle:3.0.0-rc2'
   }
 }
 
 subprojects {
-
   repositories {
     mavenLocal()
     jcenter()
@@ -36,7 +35,6 @@ subprojects {
 
   android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.1'
     compileOptions {
       sourceCompatibility 8
       targetCompatibility sourceCompatibility
@@ -56,4 +54,8 @@ subprojects {
       }
     }
   }
+}
+
+wrapper {
+  gradleVersion = '4.2.1'
 }

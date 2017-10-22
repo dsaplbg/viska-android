@@ -14,8 +14,11 @@
   ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<resources>
-  <dimen name="margin">16dp</dimen>
-  <dimen name="margin_half">8dp</dimen>
-  <dimen name="max_width_input">500dp</dimen>
-</resources>
+<ice-servers>
+  <url>stun:stun.ekiga.net</url>
+  <url>stun:stun.l.google.com:19302</url>
+  <url>stun:stun1.l.google.com:19302</url>
+  <url>stun:stun2.l.google.com:19302</url>
+  <url>stun:stun3.l.google.com:19302</url>
+  <url>stun:stun4.l.google.com:19302</url>
+</ice-servers>

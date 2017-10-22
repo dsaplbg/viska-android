@@ -21,7 +21,7 @@
     <item name="android:colorAccent">@color/secondaryColor</item>
     <item name="android:textAppearance">@style/TextAppearance.AppCompat.Body1</item>
   </style>
-  <style name="Login" parent="Main">
+  <style name="Immersive" parent="Main">
     <item name="windowActionBar">false</item>
   </style>
 </resources>

@@ -12,11 +12,14 @@
   GNU General Public License for more details.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="chat.viska.android">
+  <supports-screens android:largeScreens="true" android:xlargeScreens="true"/>
+
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
   <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
   <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
   <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
   <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
   <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
@@ -36,19 +39,14 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
-    <activity android:name=".LoginActivity" android:label="@string/title_activity_login"/>
-    <service android:name=".XmppService"
-             android:description="@string/desc_service_xmpp"
-             android:label="@string/title_service_xmpp"/>
-    <service android:name=".AuthenticatorService"
-             android:description="@string/desc_authenticator_service"
-             android:label="@string/title_authenticator_service"
-             android:exported="false">
+    <activity android:name=".LoginActivity"
+              android:label="@string/title_activity_login"
+              android:theme="@style/Immersive"/>
+    <activity android:name=".demo.CallingActivity" android:theme="@style/Immersive"/>
+    <service android:name=".XmppService"/>
+    <service android:name=".AuthenticatorService" android:exported="false">
       <intent-filter>
         <action android:name="android.accounts.AccountAuthenticator"/>
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.SYNC"/>
       </intent-filter>
       <meta-data android:name="android.accounts.AccountAuthenticator"
                  android:resource="@xml/authenticator"/>
@@ -59,4 +57,5 @@
       </intent-filter>
     </receiver>
   </application>
+
 </manifest>

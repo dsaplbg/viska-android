@@ -1,0 +1,97 @@
+<!--
+  ~ Copyright (C) 2017 Kai-Chung Yan (殷啟聰)
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, version 3 of the License, or any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primaryColor">
+  <TextView android:id="@+id/calling_label_remote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/title_inbound_call"
+            android:textAppearance="@style/TextAppearance.AppCompat.Inverse"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="@dimen/margin"/>
+  <TextView android:id="@+id/calling_remote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/calling_label_remote"
+            android:padding="@dimen/margin"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"/>
+  <TextView android:id="@+id/calling_label_progress"
+            android:text="@string/desc_calling_negotiating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/primaryTextColor"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/calling_remote"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+  <ProgressBar android:id="@+id/calling_progress"
+               android:layout_width="wrap_content"
+               android:layout_height="0dp"
+               android:indeterminateTint="@color/primaryTextColor"
+               android:visibility="gone"
+               app:layout_constraintTop_toTopOf="@id/calling_label_progress"
+               app:layout_constraintBottom_toBottomOf="@id/calling_label_progress"
+               app:layout_constraintEnd_toStartOf="@id/calling_label_progress"/>
+  <TextView android:id="@+id/calling_local"
+            android:textColor="@color/primaryTextColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:padding="@dimen/margin"
+            app:layout_constraintBottom_toTopOf="@id/calling_buttons"/>
+  <android.support.constraint.ConstraintLayout
+      android:id="@+id/calling_buttons"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      app:layout_constraintBottom_toBottomOf="parent">
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/calling_answer"
+        android:src="@drawable/call"
+        android:contentDescription="@string/title_answer_call"
+        app:fabSize="normal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_margin="@dimen/margin"
+        android:onClick="onAnswerButtonClicked"/>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/calling_hang"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/call_end"
+        android:contentDescription="@string/title_refuse_call"
+        app:backgroundTint="#FF0000"
+        app:fabSize="mini"
+        app:layout_constraintStart_toEndOf="@id/calling_answer"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="@dimen/margin"
+        android:onClick="onHangButtonClicked"/>
+  </android.support.constraint.ConstraintLayout>
+</android.support.constraint.ConstraintLayout>

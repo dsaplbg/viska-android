@@ -16,41 +16,27 @@
 
 <resources>
   <string name="title_app">Viska</string>
+  <string name="title_app_running">Connected to XMPP servers</string>
   <string name="title_jid">XMPP address</string>
   <string name="title_password">Password</string>
   <string name="title_cancel">Cancel</string>
-
   <string name="title_account">XMPP</string>
 
   <string name="desc_canvas">A canvas.</string>
-  <string name="desc_no_auth_token">This app does not yet support auth tokens for XMPP.</string>
-  <string name="desc_unsupported_account_type">Does not support this account type.</string>
+  <string name="desc_logo">Logo of the app.</string>
+  <string name="desc_connection_lost">Lost XMPP connection.</string>
   <string name="desc_invalid_jid">Invalid XMPP address.</string>
-  <string name="desc_login_canceled_by_system">
-    The login process was canceled by the system.
-  </string>
-  <string name="desc_use_account_adding_command_instead">
-    Please use the system settings app to add an account.
-  </string>
-  <string name="desc_server_has_no_secure_connection">
-    The server does not support any secure connections.
-  </string>
-  <string name="desc_server_uses_unsupported_protocol">
-    The server only supports XMPP protocols that we do not.
-  </string>
   <string name="desc_permission_error_accounts">
     Permission to access system accounts is not granted, %1s failed to launch.
   </string>
   <string name="desc_permission_error_network">
     Permission to access network is not granted, %1s failed to launch.
   </string>
-  <string name="desc_duplicated_accounts">You already logged in this account.</string>
-
-  <string name="title_login">Log in</string>
-  <string name="desc_login">Connect to your favorite XMPP servers.</string>
-
-  <string name="title_app_running">Connected to XMPP servers</string>
   <string name="desc_app_running">%1d account(s) logged in.</string>
+
+
+
+  <!-- System -->
 
   <string name="title_notif_channel_system">System notifications</string>
   <string name="desc_notif_channel_system">
@@ -62,17 +48,42 @@
     Notifications on social events, e.g. new messages and phone calls.
   </string>
 
-  <string name="title_activity_login">Add an account</string>
-  <string name="desc_logo">Logo of the app.</string>
-
-  <string name="title_service_xmpp">XMPP connections</string>
-  <string name="desc_service_xmpp">Maintains network connection to XMPP servers.</string>
-
-  <string name="title_authenticator_service">Account Authenticator</string>
-  <string name="desc_authenticator_service">
-    Wires the Account Manager framework and the app.
-  </string>
-
   <string name="title_pref_enabled">Enabled</string>
   <string name="desc_pref_enabled">Enables this account.</string>
+
+
+  <!-- activity_login -->
+
+  <string name="title_activity_login">Add an account</string>
+  <string name="title_login">Log in</string>
+
+  <string name="desc_no_auth_token">This app does not yet support auth tokens for XMPP.</string>
+  <string name="desc_unsupported_account_type">Does not support this account type.</string>
+  <string name="desc_login">Connect to your favorite XMPP servers.</string>
+  <string name="desc_duplicated_accounts">You already logged in this account.</string>
+  <string name="desc_server_has_no_secure_connection">
+    The server does not support any secure connections.
+  </string>
+  <string name="desc_server_uses_unsupported_protocol">
+    The server only supports XMPP protocols that we do not.
+  </string>
+
+
+
+  <!--activity_calling-->
+
+  <string name="title_inbound_call">Incoming call from</string>
+  <string name="title_outbound_call">Calling</string>
+  <string name="title_answer_call">Answer the call</string>
+  <string name="title_refuse_call">Refuse the call</string>
+  <string name="title_calling">Calling</string>
+
+  <string name="desc_calling_negotiating">Connecting to the remote user…</string>
+  <string name="desc_calling_ended">Call ended.</string>
+
+
+
+  <!--activity_main_demo-->
+
+  <string name="desc_searching_for_available_clients">Searching for available clients…</string>
 </resources>

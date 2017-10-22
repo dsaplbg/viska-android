@@ -3,7 +3,7 @@ Viska: Android App for Secure VoIP over XMPP
 
 Viska is an XMPP client on Android with lots of modern features while focusing
 on security. Viska heavily relies on
-[libviska-java](https://github.com/seamlik/libviska-java) so most features and
+[`libviska-java`](https://github.com/seamlik/libviska-java) so most features and
 drawbacks can be found in its project page. Some highlights of Viska include:
 
 * Strictly conforms to XMPP standards without inventing custom protocols that
@@ -28,13 +28,11 @@ messaging and video conferencing without worrying about being eavesdropped.
 ## License
 
 The Android app Viska is free software and is licensed under the GNU General
-Public License v3.0. The license can be found in the
-[`LICENSE` file](https://github.com/seamlik/viska-android/blob/master/LICENSE).
+Public License v3.0. The license can be found in the `LICENSE` file.
 
 ## Contributing
 
-Please refer to the
-[same section in the `README.md` in libviska-java](https://github.com/seamlik/libviska-java/blob/master/README.md#contributing).
+Please refer to the same section in the `README.md` in `libviska-java`.
 
 ### Building the app
 
@@ -44,9 +42,9 @@ Simply run
 gradle build
 ```
 
-At the moment, libviska-java is not yet available in JCenter. In order to build
-the app, you may need to build libviska-java first and install it to your local
-Gradle cache.
+At the moment, `libviska-java` is not yet available in JCenter. In order to
+build the app, you may need to build `libviska-java` first and install it to
+your local Maven cache.
 
 ### TODOs
 
@@ -56,7 +54,6 @@ Gradle cache.
   * Supports video conferencing
   * Supports text messaging with OMEMO
   * Supports sending audio, pictures and geographic locations
-  * Supports WebRTC
   * Supports file transferring
 
 ## History
@@ -65,8 +62,7 @@ The Viska project was orignally a capstone project of 3 undergraduate students
 from National Taichung University of Education:
 
 * [Kai-Chung Yan (殷啟聰)](https://github.com/seamlik): Core engineering
-* [BrokenPen (龔學良)](https://github.com/BrokenPen): Android engineering
-* Liou-Yun Cheng (劉耘丞): UI and art designer
+* [BrokenPen (龔學良)](https://github.com/BrokenPen): Test engineering
 
 With Professor [Lin-Huang Chang (張林煌)](http://www.ntcu.edu.tw/lchang) as the
 mentor.

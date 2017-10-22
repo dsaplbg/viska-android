@@ -19,8 +19,11 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.xmpp.Jid;
+import chat.viska.xmpp.Session;
+import chat.viska.xmpp.StandardSession;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -61,8 +64,8 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     @Override
     public void onServiceDisconnected(final ComponentName name) {
       if (isLoggingIn.getValue()) {
-        isLoggingIn.setValue(false);
-        passwordTextLayout.setError(getString(R.string.desc_login_canceled_by_system));
+        isLoggingIn.changeValue(false);
+        passwordTextLayout.setError(getString(R.string.desc_connection_lost));
       }
     }
   }
@@ -81,26 +84,26 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   private TextInputLayout jidTextLayout;
   private TextInputLayout passwordTextLayout;
   private Button button;
-
   private Jid jid;
   private XmppService service;
+  private Disposable loginSubscription;
 
   private void login() {
     try {
       jid = new Jid(jidEditText.getText().toString());
     } catch (Exception ex) {
       this.jidTextLayout.setError(getString(R.string.desc_invalid_jid));
-      isLoggingIn.setValue(false);
+      isLoggingIn.changeValue(false);
       return;
     }
     final boolean duplicated = Observable.fromArray(
         AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type))
     ).any(it -> jid.toString().equals(it.name)).blockingGet();
     if (duplicated) {
-      onLoginFailed(new DuplicatedAccountsException(getString(R.string.desc_duplicated_accounts)));
+      onLoginFailed(new Exception(getString(R.string.desc_duplicated_accounts)));
     }
 
-    isLoggingIn.setValue(true);
+    isLoggingIn.changeValue(true);
     if (service == null) {
       bindService(new Intent(this, XmppService.class), binding, BIND_AUTO_CREATE);
     } else {
@@ -109,15 +112,18 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   }
 
   private void attemptLogin() {
-    service
-        .login(jid, passwordEditText.getText().toString(), getIntent().getBooleanExtra(KEY_IS_UPDATING, false))
+    this.loginSubscription = service
+        .login(
+            jid,
+            passwordEditText.getText().toString()
+        )
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(this::onLoginSucceeded, this::onLoginFailed);
   }
 
   private void onLoginSucceeded() {
-    isLoggingIn.setValue(false);
+    isLoggingIn.changeValue(false);
     final Account account = new Account(
         jidEditText.getText().toString(),
         getString(R.string.api_account_type)
@@ -137,26 +143,25 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   }
 
   private void onLoginFailed(final Throwable cause) {
-    isLoggingIn.setValue(false);
-    if (cause instanceof DuplicatedAccountsException) {
-      this.passwordTextLayout.setError(getString(R.string.desc_duplicated_accounts));
-    } else {
-      passwordTextLayout.setError(cause.getLocalizedMessage());
-    }
+    isLoggingIn.changeValue(false);
+    passwordTextLayout.setError(cause.getLocalizedMessage());
   }
 
   private void cancel() {
-    button.setEnabled(false);
-    service
-        .getSessions()
-        .get(jid)
-        .disconnect()
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(() -> {
-          isLoggingIn.setValue(false);
-          button.setEnabled(true);
-        });
+    this.button.setEnabled(false);
+    this.loginSubscription.dispose();
+    final StandardSession session = this.service.getSessions().get(this.jid);
+    if (session == null) {
+      isLoggingIn.changeValue(false);
+      button.setEnabled(true);
+    } else {
+      session.getState().getStream().filter(
+          it -> it == Session.State.DISCONNECTED || it == Session.State.DISPOSED
+      ).subscribe(it -> {
+        isLoggingIn.changeValue(false);
+        button.setEnabled(true);
+      });
+    }
   }
 
   protected void onButtonClicked(final View view) {
