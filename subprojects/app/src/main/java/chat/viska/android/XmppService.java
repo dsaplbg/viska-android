@@ -124,18 +124,18 @@ public class XmppService extends Service {
                                            @Nonnull final Connection connection) {
     final StandardSession session;
     synchronized (this.sessions) {
-      if (this.sessions.containsKey(jid)) {
-        return sessions.get(jid);
-      } else {
-        try {
-          session = StandardSession.getInstance(Collections.singleton(connection.getProtocol()));
-        } catch (Exception ex) {
-          throw new UnsupportedOperationException(
-              getString(R.string.desc_server_uses_unsupported_protocol)
-          );
-        }
-        this.sessions.put(jid, session);
+      if (sessions.containsKey(jid)) {
+        sessions.get(jid).dispose().subscribeOn(Schedulers.io()).subscribe();
+        sessions.remove(jid);
       }
+      try {
+        session = StandardSession.getInstance(Collections.singleton(connection.getProtocol()));
+      } catch (Exception ex) {
+        throw new UnsupportedOperationException(
+            getString(R.string.desc_server_uses_unsupported_protocol)
+        );
+      }
+      this.sessions.put(jid, session);
     }
 
     session.setConnection(connection);
@@ -243,24 +243,12 @@ public class XmppService extends Service {
         }
         for (Jid it : toRemain) {
           final StandardSession session = this.sessions.get(it);
-          switch (session.getState().getValue()) {
-            case DISPOSED:
-              this.sessions.remove(it);
-              login(
-                  it,
-                  accountManager.getPassword(
-                      new Account(it.toString(), getString(R.string.api_account_type))
-                  )
-              ).subscribe();
-              break;
-            case DISCONNECTED:
-              session.login(
-                  accountManager.getPassword(
-                      new Account(it.toString(), getString(R.string.api_account_type))
-                  )
-              ).subscribe();
-              break;
-          }
+          login(
+              it,
+              this.accountManager.getPassword(
+                  new Account(it.toString(), getString(R.string.api_account_type))
+              )
+          ).subscribe();
         }
       }
       this.syncingAccounts.changeValue(false);
