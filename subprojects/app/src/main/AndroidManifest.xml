@@ -12,6 +12,7 @@
   GNU General Public License for more details.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="chat.viska.android">
+  <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="27"/>
   <supports-screens android:largeScreens="true" android:xlargeScreens="true"/>
 
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>

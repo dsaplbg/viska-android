@@ -20,7 +20,7 @@ buildscript {
     google()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.0.0-rc2'
+    classpath 'com.android.tools.build:gradle:3.0.0'
   }
 }
 
@@ -34,7 +34,7 @@ subprojects {
   apply plugin: 'com.android.application'
 
   android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     compileOptions {
       sourceCompatibility 8
       targetCompatibility sourceCompatibility
@@ -42,8 +42,6 @@ subprojects {
     defaultConfig {
       versionName rootProject.file('VERSION').text
       versionCode 0
-      minSdkVersion 23
-      targetSdkVersion 26
     }
   }
 
@@ -57,5 +55,5 @@ subprojects {
 }
 
 wrapper {
-  gradleVersion = '4.2.1'
+  gradleVersion = '4.3'
 }
