@@ -1,3 +1,0 @@
-[submodule "external/prebuilts-webrtc-android"]
-	path = external/prebuilts-webrtc-android
-	url = https://gitlab.com/seamlik/prebuilts-webrtc-android.git
