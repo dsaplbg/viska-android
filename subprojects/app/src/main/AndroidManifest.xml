@@ -11,7 +11,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="chat.viska.android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="chat.viska">
   <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="27"/>
   <supports-screens android:largeScreens="true" android:xlargeScreens="true"/>
 
@@ -26,33 +26,30 @@
 
   <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
 
-  <application android:name=".Application"
+  <application android:name=".android.Application"
                android:allowBackup="true"
-               android:banner="@drawable/banner"
                android:icon="@drawable/icon"
                android:label="@string/title_app"
                android:logo="@drawable/icon"
                android:supportsRtl="true"
                android:theme="@style/Main">
-    <activity android:name=".demo.MainActivity" android:label="@string/title_app">
+    <activity android:name=".android.demo.MainActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
-    <activity android:name=".LoginActivity"
-              android:label="@string/title_activity_login"
-              android:theme="@style/Immersive"/>
-    <activity android:name=".demo.CallingActivity" android:theme="@style/Immersive"/>
-    <service android:name=".XmppService"/>
-    <service android:name=".AuthenticatorService" android:exported="false">
+    <activity android:name=".android.LoginActivity" android:theme="@style/Immersive"/>
+    <activity android:name=".android.demo.CallingActivity" android:theme="@style/Immersive"/>
+    <service android:name=".android.XmppService"/>
+    <service android:name=".android.AuthenticatorService" android:exported="false">
       <intent-filter>
         <action android:name="android.accounts.AccountAuthenticator"/>
       </intent-filter>
       <meta-data android:name="android.accounts.AccountAuthenticator"
                  android:resource="@xml/authenticator"/>
     </service>
-    <receiver android:name=".BootCompletedBroadcastReceiver" android:exported="false">
+    <receiver android:name=".android.BootCompletedBroadcastReceiver" android:exported="false">
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED"/>
       </intent-filter>

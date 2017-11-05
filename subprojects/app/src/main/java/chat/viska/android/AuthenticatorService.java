@@ -25,6 +25,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
+import chat.viska.R;
 
 public class AuthenticatorService extends Service {
 

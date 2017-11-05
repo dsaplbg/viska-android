@@ -31,6 +31,7 @@ import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Build;
 import android.widget.Toast;
+import chat.viska.R;
 import chat.viska.android.demo.CallingActivity;
 import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.commons.reactive.ReactiveObject;

@@ -29,7 +29,7 @@ import android.support.design.widget.Snackbar;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
-import chat.viska.android.R;
+import chat.viska.R;
 import chat.viska.android.XmppService;
 import chat.viska.commons.DisposablesBin;
 import chat.viska.commons.reactive.MutableReactiveObject;

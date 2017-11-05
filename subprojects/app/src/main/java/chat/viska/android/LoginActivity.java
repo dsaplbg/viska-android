@@ -17,6 +17,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import chat.viska.R;
 import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.xmpp.Jid;
 import chat.viska.xmpp.Session;
