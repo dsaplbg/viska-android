@@ -96,6 +96,8 @@ public class MainActivity extends ListActivity {
         intent.setData(Uri.fromParts("xmpp", it.toString(), null));
         requestCode = new Random().nextInt();
         startActivityForResult(intent, requestCode);
+      }, ex -> {
+        Toast.makeText(this, ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
       });
     }));
   };
