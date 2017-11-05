@@ -64,7 +64,7 @@ public class LogcatHandler extends Handler implements SessionAware {
     }
     final int level = toAndroidLevel(record.getLevel());
     final String tag = session.getNegotiatedJid().isEmpty()
-        ? "Anonymous JID"
+        ? session.getLoginJid().toString()
         : session.getNegotiatedJid().toString();
     if (level == Log.ERROR) {
       Log.e(tag, record.getMessage(), record.getThrown());
