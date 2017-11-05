@@ -36,6 +36,7 @@ import chat.viska.android.demo.CallingActivity;
 import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.commons.reactive.ReactiveObject;
 import chat.viska.xmpp.Connection;
+import chat.viska.xmpp.DnsQueryException;
 import chat.viska.xmpp.Jid;
 import chat.viska.xmpp.Session;
 import chat.viska.xmpp.StandardSession;
@@ -77,18 +78,36 @@ public class XmppService extends Service {
   private AccountManager accountManager;
 
   private final OnAccountsUpdateListener accountsListener = accounts -> {
-    if (hasInternet.getValue()) {
-      syncAllAccounts();
-    }
+    isSyncingAccounts().getStream().filter(it -> !it).firstElement().subscribe(it -> {
+      if (hasInternet.getValue()) {
+        syncAllAccounts();
+      }
+    });
   };
   private final ConnectivityManager.NetworkCallback networkListener = new ConnectivityManager.NetworkCallback() {
+
     @Override
     public void onAvailable(Network network) {
       super.onAvailable(network);
-      hasInternet.changeValue(true);
+      hasInternet.setValue(true);
       syncAllAccounts();
     }
+
+    @Override
+    public void onLost(Network network) {
+      super.onLost(network);
+      hasInternet.setValue(false);
+    }
   };
+
+  @Nonnull
+  public String convertToErrorMessage(@Nonnull final Throwable cause) {
+    if (cause instanceof DnsQueryException) {
+      return getString(R.string.dns_query_error);
+    } else {
+      return cause.getLocalizedMessage();
+    }
+  }
 
   /**
    * Puts the service into foreground and refresh the notification description.
@@ -126,8 +145,7 @@ public class XmppService extends Service {
     final StandardSession session;
     synchronized (this.sessions) {
       if (sessions.containsKey(jid)) {
-        sessions.get(jid).dispose().subscribeOn(Schedulers.io()).subscribe();
-        sessions.remove(jid);
+        return sessions.get(jid);
       }
       try {
         session = StandardSession.getInstance(Collections.singleton(connection.getProtocol()));
@@ -201,11 +219,9 @@ public class XmppService extends Service {
     }
     return Observable.fromArray(
         connectivityManager.getAllNetworks()
-    ).filter(it ->
-        connectivityManager.getNetworkCapabilities(it).hasCapability(
-            NetworkCapabilities.NET_CAPABILITY_INTERNET
-        )
-    ).map(connectivityManager::getLinkProperties).flatMap(
+    ).filter(it -> connectivityManager.getNetworkCapabilities(it).hasCapability(
+        NetworkCapabilities.NET_CAPABILITY_INTERNET
+    )).map(connectivityManager::getLinkProperties).flatMap(
         it -> Observable.fromIterable(it.getDnsServers())
     ).toList().blockingGet();
   }

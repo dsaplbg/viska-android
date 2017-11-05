@@ -26,6 +26,9 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.MaybeSubject;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nonnull;
 
 /**
  * Login with a new or an existing account.
@@ -54,23 +57,6 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     }
   }
 
-  private class XmppServiceBinding implements ServiceConnection {
-
-    @Override
-    public void onServiceConnected(final ComponentName name, final IBinder binder) {
-      service = ((XmppService.Binder) binder).getService();
-      attemptLogin();
-    }
-
-    @Override
-    public void onServiceDisconnected(final ComponentName name) {
-      if (isLoggingIn.getValue()) {
-        isLoggingIn.changeValue(false);
-        passwordTextLayout.setError(getString(R.string.desc_connection_lost));
-      }
-    }
-  }
-
   /**
    * Key to a {@link Boolean} indicating the {@link android.content.Intent} is to log in using an
    * existing account.
@@ -78,7 +64,8 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   public final static String KEY_IS_UPDATING = "is-updating";
 
   private final MutableReactiveObject<Boolean> isLoggingIn = new MutableReactiveObject<>(false);
-  private final XmppServiceBinding binding = new XmppServiceBinding();
+  private final MaybeSubject<XmppService> xmpp = MaybeSubject.create();
+  private final AtomicReference<Disposable> loginSubscription = new AtomicReference<>();
   private ProgressBar progressBar;
   private EditText passwordEditText;
   private EditText jidEditText;
@@ -86,8 +73,20 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   private TextInputLayout passwordTextLayout;
   private Button button;
   private Jid jid;
-  private XmppService service;
-  private Disposable loginSubscription;
+
+  private final ServiceConnection binding = new ServiceConnection() {
+
+    @Override
+    public void onServiceConnected(@Nonnull final ComponentName componentName,
+                                   @Nonnull final IBinder iBinder) {
+      xmpp.onSuccess(((XmppService.Binder) iBinder).getService());
+    }
+
+    @Override
+    public void onServiceDisconnected(final ComponentName componentName) {
+      xmpp.onComplete();
+    }
+  };
 
   private void login() {
     try {
@@ -103,24 +102,16 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     if (duplicated) {
       onLoginFailed(new Exception(getString(R.string.duplicated_accounts)));
     }
-
     isLoggingIn.changeValue(true);
-    if (service == null) {
-      bindService(new Intent(this, XmppService.class), binding, BIND_AUTO_CREATE);
-    } else {
-      attemptLogin();
-    }
-  }
-
-  private void attemptLogin() {
-    this.loginSubscription = service
-        .login(
-            jid,
-            passwordEditText.getText().toString()
-        )
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(this::onLoginSucceeded, this::onLoginFailed);
+    bindService(new Intent(this, XmppService.class), binding, BIND_AUTO_CREATE);
+    xmpp.subscribe(xmpp -> {
+      final Disposable subscription = xmpp
+          .login(jid, passwordEditText.getText().toString())
+          .subscribeOn(Schedulers.io())
+          .observeOn(AndroidSchedulers.mainThread())
+          .subscribe(this::onLoginSucceeded, this::onLoginFailed);
+      loginSubscription.set(subscription);
+    });
   }
 
   private void onLoginSucceeded() {
@@ -145,27 +136,27 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
   private void onLoginFailed(final Throwable cause) {
     isLoggingIn.changeValue(false);
-    passwordTextLayout.setError(cause.getLocalizedMessage());
+    xmpp.subscribe(xmpp -> passwordTextLayout.setError(xmpp.convertToErrorMessage(cause)));
   }
 
   private void cancel() {
     this.button.setEnabled(false);
-    this.loginSubscription.dispose();
-    final StandardSession session = this.service.getSessions().get(this.jid);
+    loginSubscription.get().dispose();
+    final StandardSession session = xmpp.getValue().getSessions().get(this.jid);
     if (session == null) {
       isLoggingIn.changeValue(false);
       button.setEnabled(true);
     } else {
       session.getState().getStream().filter(
           it -> it == Session.State.DISCONNECTED || it == Session.State.DISPOSED
-      ).subscribe(it -> {
+      ).observeOn(AndroidSchedulers.mainThread()).subscribe(it -> {
         isLoggingIn.changeValue(false);
         button.setEnabled(true);
       });
     }
   }
 
-  protected void onButtonClicked(final View view) {
+  public void onButtonClicked(final View view) {
     if (isLoggingIn.getValue()) {
       cancel();
     } else {
@@ -224,7 +215,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   @Override
   protected void onDestroy() {
     this.isLoggingIn.complete();
-    if (this.service != null) {
+    if (xmpp.hasValue()) {
       unbindService(binding);
     }
     super.onDestroy();
