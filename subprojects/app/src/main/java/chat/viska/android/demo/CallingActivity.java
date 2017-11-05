@@ -61,15 +61,11 @@ public class CallingActivity extends Activity {
     @Override
     public void onIceConnectionChange(final PeerConnection.IceConnectionState state) {
       Log.d("WebRTC", "IceConnectionState is " + state);
-      if (state == PeerConnection.IceConnectionState.CONNECTED
-          && peerConnection.signalingState() == PeerConnection.SignalingState.STABLE
-          && callingState.getValue() != CallingState.IDLE) {
-        callingState.changeValue(CallingState.STREAMING);
+      if (state == PeerConnection.IceConnectionState.CONNECTED) {
+        CallingActivity.this.state.changeValue(State.STREAMING);
         progressState.changeValue(ProgressState.IDLE);
       } else if (state == PeerConnection.IceConnectionState.CLOSED) {
-        progressState.changeValue(ProgressState.ENDED);
-        setResult(RESULT_OK);
-        finish();
+        hang();
       }
     }
 
@@ -138,10 +134,10 @@ public class CallingActivity extends Activity {
     }
   }
 
-  private enum CallingState {
-    IDLE,
-    LOCAL_RINGING,
-    REMOTE_RINGING,
+  private enum State {
+    INITIALIZED,
+    NEGOTIATING,
+    RINGING,
     STREAMING
   }
 
@@ -199,20 +195,26 @@ public class CallingActivity extends Activity {
     }
   };
 
-  private final MutableReactiveObject<CallingState> callingState = new MutableReactiveObject<>(
-      CallingState.IDLE
-  );
   private final MutableReactiveObject<ProgressState> progressState = new MutableReactiveObject<>(
       ProgressState.IDLE
   );
   private final DisposablesBin bin = new DisposablesBin();
   private final SdpObserver sdpObserver = new SdpObserver();
   private final MaybeSubject<XmppService> xmpp = MaybeSubject.create();
+  private final MutableReactiveObject<State> state = new MutableReactiveObject<>(State.INITIALIZED);
   private String id;
-
+  private ViewGroup.LayoutParams centerButtonLayoutParams;
+  private ViewGroup.LayoutParams sideButtonLayoutParams;
   private PeerConnection peerConnection;
   private Jid localJid = Jid.EMPTY;
   private Jid remoteJid = Jid.EMPTY;
+
+  private FloatingActionButton hangButton;
+  private FloatingActionButton answerButton;
+  private TextView progressLabel;
+  private ProgressBar progressBar;
+  private TextView localJidLabel;
+  private TextView remoteJidLabel;
 
   private void initializeOutboundCall() {
     id = UUID.randomUUID().toString();
@@ -256,10 +258,9 @@ public class CallingActivity extends Activity {
   }
 
   private void fail(@Nonnull final Throwable ex) {
-    runOnUiThread(() -> {
-      Toast.makeText(this, ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-      finish();
-    });
+    Toast.makeText(this, ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+    setResult(RESULT_OK);
+    finish();
   }
 
   private void hang() {
@@ -268,8 +269,25 @@ public class CallingActivity extends Activity {
     finish();
   }
 
-  protected void onAnswerButtonClicked(final View view) {
+  private void showHangButton() {
+    runOnUiThread(() -> {
+      hangButton.setLayoutParams(centerButtonLayoutParams);
+      hangButton.setSize(FloatingActionButton.SIZE_NORMAL);
+      answerButton.setVisibility(View.GONE);
+    });
+  }
+
+  private void showAnswerHangButtons() {
+    runOnUiThread(() -> {
+      hangButton.setLayoutParams(sideButtonLayoutParams);
+      hangButton.setSize(FloatingActionButton.SIZE_MINI);
+      answerButton.setVisibility(View.VISIBLE);
+    });
+  }
+
+  public void onAnswerButtonClicked(final View view) {
     progressState.changeValue(ProgressState.NEGOTIATING);
+    showHangButton();
 
     final PeerConnectionFactory factory = ((Application) getApplication()).getWebRtcFactory();
     final MediaStream stream = factory.createLocalMediaStream(UUID.randomUUID().toString());
@@ -281,7 +299,7 @@ public class CallingActivity extends Activity {
     peerConnection.createAnswer(sdpObserver, new MediaConstraints());
   }
 
-  protected void onHangButtonClicked(final View view) {
+  public void onHangButtonClicked(final View view) {
     xmpp.subscribe(it -> {
       it.getSessions().get(localJid).getPluginManager().getPlugin(WebRtcPlugin.class).closeSession(
           remoteJid,
@@ -296,45 +314,22 @@ public class CallingActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_calling);
 
-    final FloatingActionButton hangButton = findViewById(R.id.calling_hang);
-    final FloatingActionButton answerButton = findViewById(R.id.calling_answer);
-    final TextView progressLabel = findViewById(R.id.calling_label_progress);
-    final ProgressBar progressBar = findViewById(R.id.calling_progress);
+    hangButton = findViewById(R.id.calling_hang);
+    answerButton = findViewById(R.id.calling_answer);
+    progressLabel = findViewById(R.id.calling_label_progress);
+    progressBar = findViewById(R.id.calling_progress);
+    localJidLabel = findViewById(R.id.calling_local);
+    remoteJidLabel = findViewById(R.id.calling_remote);
 
-    final ViewGroup.LayoutParams centerButtomParams = answerButton.getLayoutParams();
-    final ViewGroup.LayoutParams sideButtonParams = hangButton.getLayoutParams();
+    centerButtonLayoutParams = answerButton.getLayoutParams();
+    sideButtonLayoutParams = hangButton.getLayoutParams();
 
     localJid = new Jid(getIntent().getStringExtra(EXTRA_LOCAL_JID));
-    ((TextView) findViewById(R.id.calling_local)).setText(
-        localJid.toBareJid().toString()
-    );
+    localJidLabel.setText(localJid.toBareJid().toString());
 
     remoteJid = new Jid(getIntent().getData().getSchemeSpecificPart());
-    ((TextView) findViewById(R.id.calling_remote)).setText(
-        remoteJid.toBareJid().toString()
-    );
+    remoteJidLabel.setText(remoteJid.toBareJid().toString());
 
-    callingState.getStream().observeOn(AndroidSchedulers.mainThread()).subscribe(state -> {
-      switch (state) {
-        case STREAMING:
-          hangButton.setLayoutParams(centerButtomParams);
-          hangButton.setSize(FloatingActionButton.SIZE_NORMAL);
-          answerButton.setVisibility(View.GONE);
-          break;
-        case LOCAL_RINGING:
-          hangButton.setLayoutParams(sideButtonParams);
-          hangButton.setSize(FloatingActionButton.SIZE_MINI);
-          answerButton.setVisibility(View.VISIBLE);
-          break;
-        case REMOTE_RINGING:
-          hangButton.setLayoutParams(centerButtomParams);
-          hangButton.setSize(FloatingActionButton.SIZE_NORMAL);
-          answerButton.setVisibility(View.GONE);
-          break;
-        default:
-          break;
-      }
-    });
     progressState.getStream().observeOn(AndroidSchedulers.mainThread()).subscribe(state -> {
       switch (state) {
         case IDLE:
@@ -379,12 +374,12 @@ public class CallingActivity extends Activity {
 
     if (ACTION_CALL_OUTBOUND.equals(getIntent().getAction())) {
       ((TextView) findViewById(R.id.calling_label_remote)).setText(R.string.title_outbound_call);
-      initializeOutboundCall();
-      callingState.changeValue(CallingState.REMOTE_RINGING);
+      showHangButton();
       progressState.changeValue(ProgressState.NEGOTIATING);
+      initializeOutboundCall();
     } else if (ACTION_CALL_INBOUND.equals(getIntent().getAction())) {
+      showAnswerHangButtons();
       initializeInboundCall();
-      callingState.changeValue(CallingState.LOCAL_RINGING);
     }
     bindService(new Intent(this, XmppService.class), binding, BIND_AUTO_CREATE);
   }
