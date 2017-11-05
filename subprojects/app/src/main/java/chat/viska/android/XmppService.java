@@ -103,7 +103,7 @@ public class XmppService extends Service {
         .setOngoing(true);
     builder.setContentText(
         getString(
-            R.string.desc_app_running,
+            R.string.app_running,
             Observable.fromIterable(this.sessions.values()).filter(
                 it -> it.getState().getValue() == Session.State.ONLINE
             ).count().blockingGet()
@@ -133,7 +133,7 @@ public class XmppService extends Service {
         session = StandardSession.getInstance(Collections.singleton(connection.getProtocol()));
       } catch (Exception ex) {
         throw new UnsupportedOperationException(
-            getString(R.string.desc_server_uses_unsupported_protocol)
+            getString(R.string.server_uses_unsupported_protocol)
         );
       }
       this.sessions.put(jid, session);
@@ -291,7 +291,7 @@ public class XmppService extends Service {
         .flatMapMaybe(it -> Observable.fromIterable(it).filter(Connection::isTlsEnabled).firstElement())
         .doOnComplete(() -> {
           throw new UnsupportedOperationException(
-              getString(R.string.desc_server_has_no_secure_connection)
+              getString(R.string.server_has_no_secure_connection)
           );
         })
         .map(connection -> constructSession(jid, connection))
@@ -318,7 +318,7 @@ public class XmppService extends Service {
     } catch (SecurityException ex) {
       Toast.makeText(
           this,
-          getString(R.string.desc_permission_error_accounts, getString(R.string.title_app)),
+          getString(R.string.permission_error_accounts, getString(R.string.title_app)),
           Toast.LENGTH_LONG
       ).show();
       stopSelf();
@@ -338,7 +338,7 @@ public class XmppService extends Service {
     } catch (Exception ex) {
       Toast.makeText(
           this,
-          getString(R.string.desc_permission_error_network, getString(R.string.title_app)),
+          getString(R.string.permission_error_network, getString(R.string.title_app)),
           Toast.LENGTH_LONG
       ).show();
       stopSelf();

@@ -149,7 +149,7 @@ public class MainActivity extends ListActivity {
 
     snackbar = Snackbar.make(
         getListView(),
-        R.string.desc_searching_for_available_clients,
+        R.string.searching_for_available_clients,
         Snackbar.LENGTH_INDEFINITE
     );
     snackbar.addCallback(snackbarCallback);

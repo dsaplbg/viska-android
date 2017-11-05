@@ -38,7 +38,7 @@
             android:padding="@dimen/margin"
             android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"/>
   <TextView android:id="@+id/calling_label_progress"
-            android:text="@string/desc_calling_negotiating"
+            android:text="@string/calling_negotiating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/primaryTextColor"

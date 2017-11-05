@@ -22,17 +22,17 @@
   <string name="title_cancel">Cancel</string>
   <string name="title_account">XMPP</string>
 
-  <string name="desc_canvas">A canvas.</string>
-  <string name="desc_logo">Logo of the app.</string>
-  <string name="desc_connection_lost">Lost XMPP connection.</string>
-  <string name="desc_invalid_jid">Invalid XMPP address.</string>
-  <string name="desc_permission_error_accounts">
+  <string name="canvas">A canvas.</string>
+  <string name="logo">Logo of the app.</string>
+  <string name="connection_lost">Lost XMPP connection.</string>
+  <string name="invalid_jid">Invalid XMPP address.</string>
+  <string name="permission_error_accounts">
     Permission to access system accounts is not granted, %1s failed to launch.
   </string>
-  <string name="desc_permission_error_network">
+  <string name="permission_error_network">
     Permission to access network is not granted, %1s failed to launch.
   </string>
-  <string name="desc_app_running">%1d account(s) logged in.</string>
+  <string name="app_running">%1d account(s) logged in.</string>
 
 
 
@@ -54,19 +54,19 @@
 
   <!-- activity_login -->
 
-  <string name="title_activity_login">Add an account</string>
   <string name="title_login">Log in</string>
 
-  <string name="desc_no_auth_token">This app does not yet support auth tokens for XMPP.</string>
-  <string name="desc_unsupported_account_type">Does not support this account type.</string>
-  <string name="desc_login">Connect to your favorite XMPP servers.</string>
-  <string name="desc_duplicated_accounts">You already logged in this account.</string>
-  <string name="desc_server_has_no_secure_connection">
+  <string name="no_auth_token">This app does not yet support auth tokens for XMPP.</string>
+  <string name="unsupported_account_type">Does not support this account type.</string>
+  <string name="login_description">Connect to your favorite XMPP servers.</string>
+  <string name="duplicated_accounts">You already logged in this account.</string>
+  <string name="server_has_no_secure_connection">
     The server does not support any secure connections.
   </string>
-  <string name="desc_server_uses_unsupported_protocol">
+  <string name="server_uses_unsupported_protocol">
     The server only supports XMPP protocols that we do not.
   </string>
+  <string name="dns_query_error">Domain name query error.</string>
 
 
 
@@ -78,12 +78,12 @@
   <string name="title_refuse_call">Refuse the call</string>
   <string name="title_calling">Calling</string>
 
-  <string name="desc_calling_negotiating">Connecting to the remote user…</string>
-  <string name="desc_calling_ended">Call ended.</string>
+  <string name="calling_negotiating">Connecting to the remote user…</string>
+  <string name="calling_ended">Call ended.</string>
 
 
 
   <!--activity_main_demo-->
 
-  <string name="desc_searching_for_available_clients">Searching for available clients…</string>
+  <string name="searching_for_available_clients">Searching for available clients…</string>
 </resources>

@@ -93,7 +93,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     try {
       jid = new Jid(jidEditText.getText().toString());
     } catch (Exception ex) {
-      this.jidTextLayout.setError(getString(R.string.desc_invalid_jid));
+      this.jidTextLayout.setError(getString(R.string.invalid_jid));
       isLoggingIn.changeValue(false);
       return;
     }
@@ -101,7 +101,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type))
     ).any(it -> jid.toString().equals(it.name)).blockingGet();
     if (duplicated) {
-      onLoginFailed(new Exception(getString(R.string.desc_duplicated_accounts)));
+      onLoginFailed(new Exception(getString(R.string.duplicated_accounts)));
     }
 
     isLoggingIn.changeValue(true);

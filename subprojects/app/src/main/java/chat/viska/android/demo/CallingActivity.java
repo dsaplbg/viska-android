@@ -342,12 +342,12 @@ public class CallingActivity extends Activity {
           progressBar.setVisibility(View.GONE);
           break;
         case NEGOTIATING:
-          progressLabel.setText(R.string.desc_calling_negotiating);
+          progressLabel.setText(R.string.calling_negotiating);
           progressLabel.setVisibility(View.VISIBLE);
           progressBar.setVisibility(View.VISIBLE);
           break;
         case ENDED:
-          progressLabel.setText(R.string.desc_calling_ended);
+          progressLabel.setText(R.string.calling_ended);
           progressLabel.setVisibility(View.VISIBLE);
           progressBar.setVisibility(View.VISIBLE);
           break;

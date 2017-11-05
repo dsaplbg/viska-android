@@ -47,7 +47,7 @@ public class AuthenticatorService extends Service {
                              final String[] requiredFeatures,
                              final Bundle bundle) throws NetworkErrorException {
       if (!getString(R.string.api_account_type).equals(accountType)) {
-        throw new IllegalArgumentException(getString(R.string.desc_unsupported_account_type));
+        throw new IllegalArgumentException(getString(R.string.unsupported_account_type));
       }
       final Bundle result = new Bundle(1);
       final Intent intent = new Intent(AuthenticatorService.this, LoginActivity.class);
@@ -69,12 +69,12 @@ public class AuthenticatorService extends Service {
                                final Account account,
                                final String authTokenType,
                                final Bundle bundle) throws NetworkErrorException {
-      throw new UnsupportedOperationException(getString(R.string.desc_no_auth_token));
+      throw new UnsupportedOperationException(getString(R.string.no_auth_token));
     }
 
     @Override
     public String getAuthTokenLabel(final String authTokenType) {
-      throw new UnsupportedOperationException(getString(R.string.desc_no_auth_token));
+      throw new UnsupportedOperationException(getString(R.string.no_auth_token));
     }
 
     @Override
@@ -83,7 +83,7 @@ public class AuthenticatorService extends Service {
                                     final String accountType,
                                     final Bundle bundle) throws NetworkErrorException {
       if (!getString(R.string.api_account_type).equals(accountType)) {
-        throw new IllegalArgumentException(getString(R.string.desc_unsupported_account_type));
+        throw new IllegalArgumentException(getString(R.string.unsupported_account_type));
       }
       final Bundle result = new Bundle(1);
       final Intent intent = new Intent(AuthenticatorService.this, LoginActivity.class);
@@ -99,7 +99,7 @@ public class AuthenticatorService extends Service {
                               final Account account,
                               final String[] features) throws NetworkErrorException {
       if (!getString(R.string.api_account_type).equals(account.type)) {
-        throw new IllegalArgumentException(getString(R.string.desc_unsupported_account_type));
+        throw new IllegalArgumentException(getString(R.string.unsupported_account_type));
       }
       final Bundle bundle = new Bundle(1);
       bundle.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, features.length == 0);
