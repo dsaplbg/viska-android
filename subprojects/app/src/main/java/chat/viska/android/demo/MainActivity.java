@@ -109,6 +109,7 @@ public class MainActivity extends ListActivity {
       if (callSubscription != null) {
         callSubscription.dispose();
       }
+      calling.setValue(false);
     }
   };
 
