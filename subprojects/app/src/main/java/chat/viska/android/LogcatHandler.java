@@ -68,6 +68,9 @@ public class LogcatHandler extends Handler implements SessionAware {
         : session.getNegotiatedJid().toString();
     if (level == Log.ERROR) {
       Log.e(tag, record.getMessage(), record.getThrown());
+      if (record.getThrown() != null) {
+        record.getThrown().printStackTrace();
+      }
     } else if (level == Log.WARN) {
       Log.w(tag,record.getMessage(), record.getThrown());
     } else if (level == Log.INFO) {
