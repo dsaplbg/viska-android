@@ -22,6 +22,7 @@ import chat.viska.xmpp.Plugin;
 import chat.viska.xmpp.Session;
 import chat.viska.xmpp.Stanza;
 import chat.viska.xmpp.StanzaErrorException;
+import chat.viska.xmpp.XmlWrapperStanza;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
@@ -273,7 +274,7 @@ public class WebRtcPlugin implements Plugin {
       final Node node = sdpElement.appendChild(iq.createElement("line"));
       node.setTextContent(line);
     }
-    return this.context.sendIq(new Stanza(iq)).getResponse().toSingle().toCompletable();
+    return this.context.sendIq(new XmlWrapperStanza(iq)).getResponse().toSingle().toCompletable();
   }
 
   @Nonnull
@@ -308,7 +309,7 @@ public class WebRtcPlugin implements Plugin {
         }
       }
     }
-    return this.context.sendIq(new Stanza(iq)).getResponse().toSingle().toCompletable();
+    return this.context.sendIq(new XmlWrapperStanza(iq)).getResponse().toSingle().toCompletable();
   }
 
   @Nonnull
@@ -324,7 +325,7 @@ public class WebRtcPlugin implements Plugin {
     );
     webrtcElement.setAttribute("id", id);
     webrtcElement.setAttribute("action", "close");
-    return this.context.sendIq(new Stanza(iq)).getResponse().toSingle().toCompletable();
+    return this.context.sendIq(new XmlWrapperStanza(iq)).getResponse().toSingle().toCompletable();
   }
 
   @Nonnull
