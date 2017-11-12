@@ -259,13 +259,11 @@ public class CallingActivity extends Activity {
 
   private void fail(@Nonnull final Throwable ex) {
     Toast.makeText(this, ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-    setResult(RESULT_OK);
     finish();
   }
 
   private void hang() {
     progressState.changeValue(ProgressState.ENDED);
-    setResult(RESULT_OK);
     finish();
   }
 

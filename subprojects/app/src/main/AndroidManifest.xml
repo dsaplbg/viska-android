@@ -40,7 +40,10 @@
       </intent-filter>
     </activity>
     <activity android:name=".android.LoginActivity" android:theme="@style/Immersive"/>
-    <activity android:name=".android.demo.CallingActivity" android:theme="@style/Immersive"/>
+    <activity android:name=".android.demo.CallingActivity"
+              android:theme="@style/Immersive"
+              android:documentLaunchMode="always"
+              android:excludeFromRecents="true"/>
     <service android:name=".android.XmppService"/>
     <service android:name=".android.AuthenticatorService" android:exported="false">
       <intent-filter>

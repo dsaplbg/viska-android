@@ -32,7 +32,6 @@ import android.widget.Toast;
 import chat.viska.R;
 import chat.viska.android.XmppService;
 import chat.viska.commons.DisposablesBin;
-import chat.viska.commons.reactive.MutableReactiveObject;
 import chat.viska.xmpp.Jid;
 import chat.viska.xmpp.Session;
 import chat.viska.xmpp.plugins.BasePlugin;
@@ -43,18 +42,15 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.MaybeSubject;
-import java.util.Random;
 import javax.annotation.Nonnull;
 
 public class MainActivity extends ListActivity {
 
   private final MaybeSubject<Session> session = MaybeSubject.create();
   private final DisposablesBin bin = new DisposablesBin();
-  private final MutableReactiveObject<Boolean> calling = new MutableReactiveObject<>(false);
   private Snackbar snackbar;
   private Disposable callSubscription;
   private Jid localJid = Jid.EMPTY;
-  private int requestCode;
 
   private final ServiceConnection binding = new ServiceConnection() {
 
@@ -63,9 +59,12 @@ public class MainActivity extends ListActivity {
                                    @Nonnull final IBinder binder) {
       final XmppService xmpp = ((XmppService.Binder) binder).getService();
       bin.add(
-          xmpp.isSyncingAccounts().getStream().filter(it -> !it).firstOrError().subscribe(
-              it -> session.onSuccess(xmpp.getSessions().get(localJid))
-          )
+          xmpp.isSyncingAccounts().getStream().filter(it -> !it).firstOrError().subscribe(it -> {
+            final Session session = xmpp.getSessions().get(localJid);
+            if (session != null) {
+              MainActivity.this.session.onSuccess(session);
+            }
+          })
       );
     }
 
@@ -76,26 +75,28 @@ public class MainActivity extends ListActivity {
   private final AdapterView.OnItemClickListener onItemClickListener = (
       adapterView, view, position, id
   ) -> {
-    calling.changeValue(true);
     bin.add(session.subscribe(session -> {
+      snackbar.show();
       final BasePlugin plugin = session.getPluginManager().getPlugin(BasePlugin.class);
       callSubscription = plugin.queryDiscoItems(
           (Jid) getListView().getItemAtPosition(position),
           null
       ).flattenAsObservable(it -> it).filter(
           it -> it.getNode().isEmpty()
+              && !it.getJid().getLocalPart().isEmpty()
+              && !localJid.equals(it.getJid())
       ).map(DiscoItem::getJid).observeOn(Schedulers.io()).filter(
-          it -> checkIfCallable(it, plugin)
-      ).firstElement().observeOn(AndroidSchedulers.mainThread()).doOnComplete(() -> {
-        calling.changeValue(false);
+          it -> plugin.queryDiscoInfo(it).blockingGet().getFeatures().contains(WebRtcPlugin.XMLNS)
+      ).observeOn(AndroidSchedulers.mainThread()).doOnComplete(() -> {
+        snackbar.dismiss();
         Toast.makeText(this, "No available client found", Toast.LENGTH_LONG).show();
       }).subscribe(it -> {
         final Intent intent = new Intent(this, CallingActivity.class);
         intent.setAction(CallingActivity.ACTION_CALL_OUTBOUND);
         intent.putExtra(CallingActivity.EXTRA_LOCAL_JID, localJid.toString());
         intent.setData(Uri.fromParts("xmpp", it.toString(), null));
-        requestCode = new Random().nextInt();
-        startActivityForResult(intent, requestCode);
+        startActivity(intent);
+        snackbar.dismiss();
       }, ex -> {
         Toast.makeText(this, ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
       });
@@ -103,20 +104,22 @@ public class MainActivity extends ListActivity {
   };
 
   private final Snackbar.Callback snackbarCallback = new Snackbar.Callback() {
+
     @Override
     public void onDismissed(Snackbar transientBottomBar, int event) {
       super.onDismissed(transientBottomBar, event);
       if (callSubscription != null) {
         callSubscription.dispose();
       }
-      calling.setValue(false);
+      getListView().setEnabled(true);
+    }
+
+    @Override
+    public void onShown(Snackbar sb) {
+      super.onShown(sb);
+      getListView().setEnabled(false);
     }
   };
-
-  private boolean checkIfCallable(@Nonnull final Jid jid, @Nonnull final BasePlugin plugin) {
-    return !jid.equals(localJid)
-        && plugin.queryDiscoInfo(jid).blockingGet().getFeatures().contains(WebRtcPlugin.XMLNS);
-  }
 
   private void refresh() {
     bin.add(session.subscribe(session -> {
@@ -151,7 +154,7 @@ public class MainActivity extends ListActivity {
     super.onCreate(savedInstanceState);
 
     snackbar = Snackbar.make(
-        getListView(),
+        getListView().getRootView(),
         R.string.searching_for_available_clients,
         Snackbar.LENGTH_INDEFINITE
     );
@@ -160,15 +163,6 @@ public class MainActivity extends ListActivity {
         R.string.title_cancel,
         view -> snackbarCallback.onDismissed(snackbar, Snackbar.Callback.DISMISS_EVENT_ACTION)
     );
-    calling.getStream().observeOn(AndroidSchedulers.mainThread()).subscribe(calling -> {
-      if (calling) {
-        getListView().setEnabled(false);
-        snackbar.show();
-      } else {
-        snackbar.dismiss();
-        getListView().setEnabled(true);
-      }
-    });
 
     final Account[] accounts = AccountManager.get(this).getAccountsByType(
         getString(R.string.api_account_type)
@@ -185,7 +179,7 @@ public class MainActivity extends ListActivity {
 
   @Override
   protected void onDestroy() {
-    if (session.hasValue()) {
+    if (session.hasValue() || !session.hasComplete()) {
       unbindService(binding);
     }
     bin.clear();
@@ -193,13 +187,5 @@ public class MainActivity extends ListActivity {
       callSubscription.dispose();
     }
     super.onDestroy();
-  }
-
-  @Override
-  protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    if (requestCode == this.requestCode) {
-      calling.changeValue(false);
-    }
   }
 }
