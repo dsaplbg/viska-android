@@ -172,6 +172,7 @@ public class XmppService extends Service {
       intent.putExtra(CallingActivity.EXTRA_LOCAL_JID, session.getLoginJid().toString());
       intent.putExtra(CallingActivity.EXTRA_SESSION_ID, it.getId());
       intent.putExtra(CallingActivity.EXTRA_REMOTE_SDP, it.getSdp().description);
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       startActivity(intent);
     });
 
