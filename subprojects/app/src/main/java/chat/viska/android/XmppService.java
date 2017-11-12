@@ -46,6 +46,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import java.net.InetAddress;
 import java.util.Collections;
@@ -56,7 +57,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import javax.annotation.CheckReturnValue;
+
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -73,7 +74,7 @@ public class XmppService extends Service {
   @GuardedBy("itself")
   private final HashMap<Jid, StandardSession> sessions = new HashMap<>();
   private final Binder binder = new Binder();
-  private final MutableReactiveObject<Boolean> syncingAccounts = new MutableReactiveObject<>(false);
+  private final MutableReactiveObject<Boolean> isSyncingAccounts = new MutableReactiveObject<>(false);
   private final MutableReactiveObject<Boolean> hasInternet = new MutableReactiveObject<>(false);
   private AccountManager accountManager;
 
@@ -97,6 +98,9 @@ public class XmppService extends Service {
     public void onLost(Network network) {
       super.onLost(network);
       hasInternet.setValue(false);
+      for (StandardSession session : sessions.values()) {
+        session.killConnection().subscribeOn(Schedulers.io()).subscribe();
+      }
     }
   };
 
@@ -144,9 +148,6 @@ public class XmppService extends Service {
                                            @Nonnull final Connection connection) {
     final StandardSession session;
     synchronized (this.sessions) {
-      if (sessions.containsKey(jid)) {
-        return sessions.get(jid);
-      }
       try {
         session = StandardSession.getInstance(Collections.singleton(connection.getProtocol()));
       } catch (Exception ex) {
@@ -229,10 +230,10 @@ public class XmppService extends Service {
 
   public void syncAllAccounts() {
     Completable.fromAction(() -> {
-      if (this.syncingAccounts.getValue()) {
+      if (this.isSyncingAccounts.getValue()) {
         return;
       }
-      this.syncingAccounts.changeValue(true);
+      this.isSyncingAccounts.changeValue(true);
       final List<Jid> enabled = Observable.fromArray(
           this.accountManager.getAccountsByType(getString(R.string.api_account_type))
       ).map(it -> new Jid(it.name)).toList().blockingGet();
@@ -240,6 +241,10 @@ public class XmppService extends Service {
       final Set<Jid> toRemove;
       final Set<Jid> toLogin;
       final Set<Jid> toRemain;
+
+      final Consumer<Throwable> errorConsumer = ex -> {
+        Toast.makeText(this, ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+      };
       synchronized (this.sessions) {
         toRemove = new HashSet<>(this.sessions.keySet());
         toRemove.removeAll(enabled);
@@ -256,24 +261,25 @@ public class XmppService extends Service {
               it,
               this.accountManager.getPassword(
                   new Account(it.toString(), getString(R.string.api_account_type))
-              )
-          ).subscribe();
+              ),
+              true
+          ).observeOn(AndroidSchedulers.mainThread()).subscribe(() -> {}, errorConsumer);
         }
         for (Jid it : toRemain) {
           final StandardSession session = this.sessions.get(it);
-          login(
-              it,
-              this.accountManager.getPassword(
-                  new Account(it.toString(), getString(R.string.api_account_type))
-              )
-          ).subscribe();
+          if (session.getState().getValue() == Session.State.DISCONNECTED) {
+            login(
+                it,
+                this.accountManager.getPassword(
+                    new Account(it.toString(), getString(R.string.api_account_type))
+                ),
+                false
+            ).observeOn(AndroidSchedulers.mainThread()).subscribe(() -> {}, errorConsumer);
+          }
         }
       }
-      this.syncingAccounts.changeValue(false);
-    }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
-        () -> {},
-        cause -> Toast.makeText(this, cause.getLocalizedMessage(), Toast.LENGTH_LONG).show()
-    );
+      this.isSyncingAccounts.changeValue(false);
+    }).subscribeOn(Schedulers.io()).subscribe();
 
   }
 
@@ -284,39 +290,69 @@ public class XmppService extends Service {
 
   @Nonnull
   public ReactiveObject<Boolean> isSyncingAccounts() {
-    return syncingAccounts;
+    return isSyncingAccounts;
   }
 
   /**
-   * Submits an XMPP account and logs it in. If a {@link Session} with the same {@link Jid} already
-   * exists, it is disposed of and removed first. Signals {@link UnsupportedOperationException} if
-   * no secure XMPP connection methods are found. May signal other {@link Exception}s.
+   * Submits an XMPP account and logs it in. May signal various {@link Exception}s.
    */
   @Nonnull
-  @CheckReturnValue
   public Completable login(@Nonnull final Jid jid,
-                           @Nonnull final String password) {
+                           @Nonnull final String password,
+                           final boolean replaceExisting) {
     final Action cancellation = () -> {
-      final StandardSession session = this.sessions.get(jid);
-      if (session != null) {
-        session.disconnect().subscribeOn(Schedulers.io()).subscribe();
+      synchronized (sessions) {
+        final StandardSession session = sessions.get(jid);
+        if (session != null) {
+          session.killConnection().subscribeOn(Schedulers.io()).subscribe();
+        }
       }
     };
     startForeground();
+    synchronized (sessions) {
+      final StandardSession session = sessions.get(jid);
+      if (session != null) {
+        if (replaceExisting) {
+          sessions.remove(jid);
+          session.dispose().subscribeOn(Schedulers.io()).subscribe();
+        } else {
+          switch (session.getState().getValue()) {
+            case ONLINE:
+              return Completable.complete();
+            case CONNECTING:
+              return session.getState()
+                  .getStream()
+                  .filter(it -> it == Session.State.ONLINE)
+                  .firstOrError()
+                  .toCompletable();
+            case HANDSHAKING:
+              return session.getState()
+                  .getStream()
+                  .filter(it -> it == Session.State.ONLINE)
+                  .firstOrError()
+                  .toCompletable();
+            default:
+              return session.killConnection()
+                  .andThen(session.login(password))
+                  .doOnError(ex -> cancellation.run())
+                  .doOnComplete(this::startForeground)
+                  .doOnDispose(cancellation);
+          }
+        }
+      }
+    }
     return Connection
         .queryDns(jid.getDomainPart(), getDns())
-        .flatMapMaybe(it -> Observable.fromIterable(it).filter(Connection::isTlsEnabled).firstElement())
+        .flatMapMaybe(
+            it -> Observable.fromIterable(it).filter(Connection::isTlsEnabled).firstElement()
+        )
         .doOnComplete(() -> {
           throw new UnsupportedOperationException(
               getString(R.string.server_has_no_secure_connection)
           );
         })
         .map(connection -> constructSession(jid, connection))
-        .flatMapCompletable(session ->
-            session.getState().getValue() != Session.State.ONLINE
-                ? session.login(password)
-                : Completable.complete()
-        )
+        .flatMapCompletable(it -> it.login(password))
         .doOnError(ex -> cancellation.run())
         .doOnComplete(this::startForeground)
         .doOnDispose(cancellation);
@@ -370,7 +406,7 @@ public class XmppService extends Service {
     ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE)).unregisterNetworkCallback(
         networkListener
     );
-    syncingAccounts.complete();
+    isSyncingAccounts.complete();
     Observable.fromIterable(this.sessions.values()).observeOn(Schedulers.io()).subscribe(
         Session::close
     );

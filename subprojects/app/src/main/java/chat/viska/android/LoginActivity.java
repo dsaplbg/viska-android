@@ -96,9 +96,10 @@ public class LoginActivity extends AccountAuthenticatorActivity {
       isLoggingIn.changeValue(false);
       return;
     }
-    final boolean duplicated = Observable.fromArray(
-        AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type))
-    ).any(it -> jid.toString().equals(it.name)).blockingGet();
+    final boolean duplicated = Observable
+        .fromArray(AccountManager.get(this).getAccountsByType(getString(R.string.api_account_type)))
+        .any(it -> jid.toString().equals(it.name))
+        .blockingGet();
     if (duplicated) {
       onLoginFailed(new Exception(getString(R.string.duplicated_accounts)));
     }
@@ -106,7 +107,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     bindService(new Intent(this, XmppService.class), binding, BIND_AUTO_CREATE);
     xmpp.subscribe(xmpp -> {
       final Disposable subscription = xmpp
-          .login(jid, passwordEditText.getText().toString())
+          .login(jid, passwordEditText.getText().toString(), true)
           .subscribeOn(Schedulers.io())
           .observeOn(AndroidSchedulers.mainThread())
           .subscribe(this::onLoginSucceeded, this::onLoginFailed);
