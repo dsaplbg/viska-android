@@ -16,12 +16,15 @@
 
 package chat.viska.android.demo;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
 import android.view.View;
@@ -40,6 +43,7 @@ import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.subjects.MaybeSubject;
 import java.util.EventObject;
+import java.util.Random;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import org.webrtc.DataChannel;
@@ -65,7 +69,7 @@ public class CallingActivity extends Activity {
         CallingActivity.this.state.changeValue(State.STREAMING);
         progressState.changeValue(ProgressState.IDLE);
       } else if (state == PeerConnection.IceConnectionState.CLOSED) {
-        hang();
+        finish();
       }
     }
 
@@ -202,6 +206,7 @@ public class CallingActivity extends Activity {
   private final SdpObserver sdpObserver = new SdpObserver();
   private final MaybeSubject<XmppService> xmpp = MaybeSubject.create();
   private final MutableReactiveObject<State> state = new MutableReactiveObject<>(State.INITIALIZED);
+  private final int permissionRequestCode = new Random().nextInt(Integer.MAX_VALUE) + 1;
   private String id;
   private ViewGroup.LayoutParams centerButtonLayoutParams;
   private ViewGroup.LayoutParams sideButtonLayoutParams;
@@ -215,6 +220,13 @@ public class CallingActivity extends Activity {
   private ProgressBar progressBar;
   private TextView localJidLabel;
   private TextView remoteJidLabel;
+
+  private void checkPermissions() {
+    if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) {
+      requestPermissions(new String[] { Manifest.permission.RECORD_AUDIO }, permissionRequestCode);
+      answerButton.setEnabled(false);
+    }
+  }
 
   private void initializeOutboundCall() {
     id = UUID.randomUUID().toString();
@@ -263,8 +275,13 @@ public class CallingActivity extends Activity {
   }
 
   private void hang() {
-    progressState.changeValue(ProgressState.ENDED);
-    finish();
+    xmpp.subscribe(it -> {
+      it.getSessions().get(localJid).getPluginManager().getPlugin(WebRtcPlugin.class).closeSession(
+          remoteJid,
+          id
+      );
+      finish();
+    });
   }
 
   private void showHangButton() {
@@ -298,13 +315,7 @@ public class CallingActivity extends Activity {
   }
 
   public void onHangButtonClicked(final View view) {
-    xmpp.subscribe(it -> {
-      it.getSessions().get(localJid).getPluginManager().getPlugin(WebRtcPlugin.class).closeSession(
-          remoteJid,
-          id
-      );
-      hang();
-    });
+    hang();
   }
 
   @Override
@@ -349,6 +360,8 @@ public class CallingActivity extends Activity {
       }
     });
 
+    checkPermissions();
+
     xmpp.subscribe(it -> {
       final Flowable<EventObject> events = it
           .getSessions()
@@ -366,7 +379,7 @@ public class CallingActivity extends Activity {
       bin.add(
           events.ofType(WebRtcPlugin.SessionClosingEvent.class).filter(
               event -> event.getId().equals(id)
-          ).subscribe(event -> hang())
+          ).subscribe(event -> finish())
       );
     }, this::fail);
 
@@ -396,5 +409,17 @@ public class CallingActivity extends Activity {
   @Override
   public void onBackPressed() {
     moveTaskToBack(true);
+  }
+
+  @Override
+  public void onRequestPermissionsResult(final int requestCode,
+                                         @NonNull final String[] permissions,
+                                         @NonNull final int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    if (requestCode == permissionRequestCode && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+      hang();
+    } else {
+      answerButton.setEnabled(true);
+    }
   }
 }
