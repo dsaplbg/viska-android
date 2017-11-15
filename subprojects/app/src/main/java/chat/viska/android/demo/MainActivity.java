@@ -154,7 +154,7 @@ public class MainActivity extends ListActivity {
     super.onCreate(savedInstanceState);
 
     snackbar = Snackbar.make(
-        getListView().getRootView(),
+        getListView(),
         R.string.searching_for_available_clients,
         Snackbar.LENGTH_INDEFINITE
     );
