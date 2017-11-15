@@ -57,7 +57,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -161,8 +160,11 @@ public class XmppService extends Service {
     session.setConnection(connection);
     session.setLoginJid(jid);
     session.getPluginManager().apply(BasePlugin.class);
+
     session.getPluginManager().apply(WebRtcPlugin.class);
-    session.getPluginManager().getPlugin(WebRtcPlugin.class).getEventStream().ofType(
+    final WebRtcPlugin webRtcPlugin = session.getPluginManager().getPlugin(WebRtcPlugin.class);
+    webRtcPlugin.getEventStream().subscribe(it -> session.getLogger().info(it.toString()));
+    webRtcPlugin.getEventStream().ofType(
         WebRtcPlugin.SdpReceivedEvent.class
     ).filter(
         WebRtcPlugin.SdpReceivedEvent::isCreating
