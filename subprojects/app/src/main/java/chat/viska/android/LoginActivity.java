@@ -138,6 +138,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
   private void onLoginFailed(final Throwable cause) {
     isLoggingIn.changeValue(false);
     xmpp.subscribe(xmpp -> passwordTextLayout.setError(xmpp.convertToErrorMessage(cause)));
+    cause.printStackTrace();
   }
 
   private void cancel() {
