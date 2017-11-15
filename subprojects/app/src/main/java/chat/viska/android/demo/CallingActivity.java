@@ -81,6 +81,7 @@ public class CallingActivity extends Activity {
       Log.d("WebRTC", "IceGatheringState is " + state);
       if (state == PeerConnection.IceGatheringState.COMPLETE
           && peerConnection.iceConnectionState() != PeerConnection.IceConnectionState.CONNECTED
+          && peerConnection.iceConnectionState() != PeerConnection.IceConnectionState.CLOSED
           && progressState.getValue() != ProgressState.ENDED) {
         progressState.changeValue(ProgressState.IDLE);
         bin.add(xmpp.subscribe(
