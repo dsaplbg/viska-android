@@ -22,6 +22,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -214,6 +215,7 @@ public class CallingActivity extends Activity {
   private PeerConnection peerConnection;
   private Jid localJid = Jid.EMPTY;
   private Jid remoteJid = Jid.EMPTY;
+  private AudioManager audioManager;
 
   private FloatingActionButton hangButton;
   private FloatingActionButton answerButton;
@@ -330,6 +332,10 @@ public class CallingActivity extends Activity {
     progressBar = findViewById(R.id.calling_progress);
     localJidLabel = findViewById(R.id.calling_local);
     remoteJidLabel = findViewById(R.id.calling_remote);
+    audioManager = getSystemService(AudioManager.class);
+
+    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+    audioManager.setSpeakerphoneOn(false); // Otherwise sound won't be routed to headphone. Bug?
 
     centerButtonLayoutParams = answerButton.getLayoutParams();
     sideButtonLayoutParams = hangButton.getLayoutParams();
@@ -404,6 +410,8 @@ public class CallingActivity extends Activity {
       unbindService(binding);
     }
     bin.clear();
+    audioManager.setSpeakerphoneOn(true); // Restore what was changed previously in onCreate()
+    audioManager.setMode(AudioManager.MODE_NORMAL);
     super.onDestroy();
   }
 
